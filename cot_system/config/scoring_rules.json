@@ -1,0 +1,83 @@
+{
+  "provisional": true,
+  "version": "0.3-provisional",
+  "notes": "ALL numeric thresholds are PROVISIONAL hypotheses from the plan (§4). Not calibrated per market. Jefferson should review before treating bias/quality as decision inputs. Price confirmation uses Yahoo weekly closes mapped in markets.json when available.",
+  "horizons_weeks": {
+    "weekly": 1,
+    "monthly": 4,
+    "quarterly": 13,
+    "semiannual": 26,
+    "annual": 52
+  },
+  "horizon_weights": {
+    "weekly": 0.10,
+    "monthly": 0.15,
+    "quarterly": 0.25,
+    "semiannual": 0.25,
+    "annual": 0.25
+  },
+  "primary_groups": [
+    "Leveraged Funds",
+    "Asset Manager / Institutional"
+  ],
+  "context_groups": [
+    "Dealer / Intermediary"
+  ],
+  "complementary_groups": [
+    "Other Reportables",
+    "Nonreportable"
+  ],
+  "group_weights": {
+    "Leveraged Funds": 0.55,
+    "Asset Manager / Institutional": 0.45
+  },
+  "complementary_group_weights": {
+    "Other Reportables": 0.08,
+    "Nonreportable": 0.05
+  },
+  "complementary_blend_cap": 0.15,
+  "neutral_net_change_oi_pct": 0.5,
+  "strong_net_change_oi_pct": 2.0,
+  "percentile_bands": {
+    "extreme_low": 10,
+    "low": 25,
+    "high": 75,
+    "extreme_high": 90
+  },
+  "bias_classification": {
+    "strongly_bullish_min": 60,
+    "moderately_bullish_min": 25,
+    "moderately_bearish_max": -25,
+    "strongly_bearish_max": -60
+  },
+  "persistence_min_weeks": 3,
+  "acceleration_ratio_threshold": 1.5,
+  "acceleration_lookback_weeks": 4,
+  "min_history_weeks_for_percentile": 10,
+  "min_history_weeks_for_156w": 40,
+  "price": {
+    "enabled": true,
+    "sideways_abs_return_pct": 0.5,
+    "confirm_weight_in_horizon": 0.25,
+    "quality_confirm_bonus": 10,
+    "quality_diverge_penalty": 12,
+    "extension_percentile": 90
+  },
+  "regime": {
+    "min_weeks_since_cross_for_note": 1
+  },
+  "divergence": {
+    "nn_level_gap_pct": 5.0,
+    "change_disagree_oi_pct": 0.5
+  },
+  "quality": {
+    "min_weeks_full_credit": 52,
+    "horizon_agreement_full_credit": 0.8,
+    "group_agreement_bonus": 15,
+    "divergence_penalty": 20,
+    "extension_warning_percentile": 90,
+    "insufficient_history_penalty": 25,
+    "regime_recent_weeks": 8,
+    "complementary_agreement_bonus": 5
+  }
+}

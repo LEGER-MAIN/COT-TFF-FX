@@ -1,0 +1,34 @@
+{
+  "scoring_version": "0.3-provisional",
+  "classify_bias": {
+    "70": "fuertemente_alcista",
+    "30": "moderadamente_alcista",
+    "0": "neutral_o_mixto",
+    "-30": "moderadamente_bajista",
+    "-70": "fuertemente_bajista"
+  },
+  "synthetic_scored": {
+    "market": "TEST FX",
+    "combined_bias": 7.1,
+    "evidence_quality": 65.0,
+    "LF_bias": 92.5,
+    "provisional_thresholds": true
+  },
+  "manual_net": {
+    "net_position_w0": 3183,
+    "normalized_net_pct_w0": 3.183,
+    "delta_net_weekly_w1": 1107,
+    "delta_net_label_w1": "mejora_alcista",
+    "accum_liq_pattern_w1": "se_reducen_ambas"
+  },
+  "universe_after_exclude": [
+    "BRAZILIAN REAL - CHICAGO MERCANTILE EXCHANGE",
+    "EURO FX - CHICAGO MERCANTILE EXCHANGE",
+    "NZ DOLLAR - CHICAGO MERCANTILE EXCHANGE",
+    "USD INDEX - ICE FUTURES U.S."
+  ],
+  "saturday_of_week": {
+    "2025-06-17": "2025-06-21",
+    "2025-06-20": "2025-06-21"
+  }
+}

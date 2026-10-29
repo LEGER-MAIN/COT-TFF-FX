@@ -1,0 +1,14 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=COT TFF FX
+Comment=Ejecuta el pipeline COT y abre el informe HTML
+# Plantilla: ejecuta install_desktop_shortcut.sh para generar un .desktop
+# con rutas absolutas en el Escritorio. No uses este archivo a ciegas si
+# lo copias sin editar Exec/Path.
+Exec=PLACEHOLDER_RUN_COT_SH
+Path=PLACEHOLDER_LAUNCHER_DIR
+Icon=utilities-terminal
+Terminal=false
+Categories=Finance;Office;
+StartupNotify=true

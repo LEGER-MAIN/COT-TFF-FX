@@ -1,0 +1,202 @@
+{
+  "report_type": "TFF",
+  "cftc_subgroup_code": "F10",
+  "extra_subgroups": ["F15"],
+  "description": "Currency / FX futures under CFTC TFF Futures Only: F10 Currencies, F15 (NZD/BRL when present), plus USD INDEX (ICE, F90). Excludes MXN, ZAR, CNH.",
+  "include_cross_rates": true,
+  "exclude_markets": [
+    {"name_contains": "MEXICAN PESO"},
+    {"name_contains": "SO AFRICAN RAND"},
+    {"name_contains": "SOUTH AFRICAN RAND"},
+    {"name_contains": "USD/CHINESE RENMINBI-OFFSHORE"},
+    {"name_contains": "CHINESE RENMINBI"}
+  ],
+  "extra_markets": [
+    {
+      "name_contains": "USD INDEX",
+      "cftc_subgroup_code": "F90",
+      "cftc_contract_market_code": "098662",
+      "cftc_commodity_code": "98",
+      "exchange": "ICE FUTURES U.S.",
+      "alias": "DXY",
+      "notes": "USD INDEX is NOT in F10 (Currencies); CFTC places it in F90. Included by explicit name/code match while keeping TFF Futures Only."
+    }
+  ],
+  "price_source": {
+    "provider": "Yahoo Finance chart API (weekly)",
+    "note": "CME FX futures continuous (=F) where available; DX-Y.NYB for USD INDEX (ICE DXY). Crosses use CME RP/RY futures. F15 kept: 6N (NZD), 6L (BRL).",
+    "tickers": {
+      "AUSTRALIAN DOLLAR": "6A=F",
+      "BRITISH POUND": "6B=F",
+      "CANADIAN DOLLAR": "6C=F",
+      "EURO FX": "6E=F",
+      "EURO FX/BRITISH POUND": "RP=F",
+      "EURO FX/JAPANESE YEN": "RY=F",
+      "JAPANESE YEN": "6J=F",
+      "SWISS FRANC": "6S=F",
+      "USD INDEX": "DX-Y.NYB",
+      "NZ DOLLAR": "6N=F",
+      "BRAZILIAN REAL": "6L=F"
+    }
+  },
+  "swing_pairs": [
+    {
+      "symbol": "EURUSD",
+      "section": "majors_usd",
+      "section_label": "Majors USD",
+      "cot_market_key": "EURO FX",
+      "bias_invert": false,
+      "coverage": "direct",
+      "cot_backed": true,
+      "spot_or_futures": "EURUSD / 6E",
+      "correlation_clusters": ["eur", "usd_risk", "g10_long_usd"]
+    },
+    {
+      "symbol": "GBPUSD",
+      "section": "majors_usd",
+      "section_label": "Majors USD",
+      "cot_market_key": "BRITISH POUND",
+      "bias_invert": false,
+      "coverage": "direct",
+      "cot_backed": true,
+      "spot_or_futures": "GBPUSD / 6B",
+      "correlation_clusters": ["gbp", "usd_risk", "g10_long_usd"]
+    },
+    {
+      "symbol": "AUDUSD",
+      "section": "majors_usd",
+      "section_label": "Majors USD",
+      "cot_market_key": "AUSTRALIAN DOLLAR",
+      "bias_invert": false,
+      "coverage": "direct",
+      "cot_backed": true,
+      "spot_or_futures": "AUDUSD / 6A",
+      "correlation_clusters": ["aud", "usd_risk", "commodity_fx", "g10_long_usd"]
+    },
+    {
+      "symbol": "NZDUSD",
+      "section": "opcionales",
+      "section_label": "Opcionales (NZD/BRL)",
+      "cot_market_key": "NZ DOLLAR",
+      "bias_invert": false,
+      "coverage": "direct",
+      "cot_backed": true,
+      "spot_or_futures": "NZDUSD / 6N",
+      "correlation_clusters": ["nzd", "usd_risk", "commodity_fx", "aud"]
+    },
+    {
+      "symbol": "USDCAD",
+      "section": "majors_usd",
+      "section_label": "Majors USD",
+      "cot_market_key": "CANADIAN DOLLAR",
+      "bias_invert": true,
+      "coverage": "direct",
+      "cot_backed": true,
+      "spot_or_futures": "USDCAD / 6C",
+      "correlation_clusters": ["cad", "usd_risk", "commodity_fx", "g10_long_usd"],
+      "notes": "Futuros CAD: sesgo alcista CAD → sesgo bajista USDCAD (bias_invert)."
+    },
+    {
+      "symbol": "USDCHF",
+      "section": "majors_usd",
+      "section_label": "Majors USD",
+      "cot_market_key": "SWISS FRANC",
+      "bias_invert": true,
+      "coverage": "direct",
+      "cot_backed": true,
+      "spot_or_futures": "USDCHF / 6S",
+      "correlation_clusters": ["chf", "usd_risk", "g10_long_usd"],
+      "notes": "Futuros CHF: sesgo alcista CHF → sesgo bajista USDCHF (bias_invert)."
+    },
+    {
+      "symbol": "USDJPY",
+      "section": "majors_usd",
+      "section_label": "Majors USD",
+      "cot_market_key": "JAPANESE YEN",
+      "bias_invert": true,
+      "coverage": "direct",
+      "cot_backed": true,
+      "spot_or_futures": "USDJPY / 6J",
+      "correlation_clusters": ["jpy", "usd_jpy_block", "g10_long_usd"],
+      "notes": "Futuros JPY: sesgo alcista JPY → sesgo bajista USDJPY (bias_invert)."
+    },
+    {
+      "symbol": "USDBRL",
+      "section": "opcionales",
+      "section_label": "Opcionales (NZD/BRL)",
+      "cot_market_key": "BRAZILIAN REAL",
+      "bias_invert": true,
+      "coverage": "direct",
+      "cot_backed": true,
+      "spot_or_futures": "USDBRL / 6L",
+      "correlation_clusters": ["brl", "latam", "usd_risk"]
+    },
+    {
+      "symbol": "EURGBP",
+      "section": "crosses",
+      "section_label": "Crosses",
+      "cot_market_key": "EURO FX/BRITISH POUND",
+      "bias_invert": false,
+      "coverage": "direct",
+      "cot_backed": true,
+      "spot_or_futures": "EURGBP / RP",
+      "correlation_clusters": ["eur", "gbp", "eur_gbp"]
+    },
+    {
+      "symbol": "EURJPY",
+      "section": "crosses",
+      "section_label": "Crosses",
+      "cot_market_key": "EURO FX/JAPANESE YEN",
+      "bias_invert": false,
+      "coverage": "direct",
+      "cot_backed": true,
+      "spot_or_futures": "EURJPY / RY",
+      "correlation_clusters": ["eur", "jpy", "usd_jpy_block", "eur_jpy"]
+    },
+    {
+      "symbol": "GBPJPY",
+      "section": "crosses",
+      "section_label": "Crosses",
+      "coverage": "derived",
+      "cot_backed": true,
+      "spot_or_futures": "GBPJPY",
+      "correlation_clusters": ["gbp", "jpy", "usd_jpy_block"],
+      "cot_sources": [
+        {"key": "BRITISH POUND", "weight": 0.5, "invert": false},
+        {"key": "JAPANESE YEN", "weight": 0.5, "invert": true}
+      ],
+      "notes": "Sesgo derivado: (sesgo GBP − sesgo JPY) / 2 en escala de sesgo; no hay contrato TFF GBPJPY dedicado."
+    },
+    {
+      "symbol": "DXY",
+      "section": "indice_dxy",
+      "section_label": "Índice DXY",
+      "cot_market_key": "USD INDEX",
+      "bias_invert": false,
+      "coverage": "direct",
+      "cot_backed": true,
+      "spot_or_futures": "DX-Y.NYB / ICE USD INDEX",
+      "correlation_clusters": ["dxy", "usd_risk", "g10_long_usd"],
+      "notes": "Índice USD (F90). Alcista DXY ≈ fuerza USD frente a majors."
+    }
+  ],
+  "weekly_recommendation": {
+    "disclaimer": "Recomendación semanal de estudio para swing — no es señal de compra automática.",
+    "priority": {
+      "alta_abs_bias_min": 40,
+      "alta_quality_min": 70,
+      "media_abs_bias_min": 20,
+      "media_quality_min": 55
+    },
+    "price_confirm_boost": 1.12,
+    "price_diverge_penalty": 0.88,
+    "correlation_warning_clusters": [
+      "usd_jpy_block",
+      "g10_long_usd",
+      "latam",
+      "commodity_fx",
+      "aud"
+    ]
+  },
+  "notes": "Primary: CFTC_SubGroup_Code F10. Extra subgroups: F15 (NZD/BRL if present; MXN/ZAR/CNH excluded via exclude_markets). Extra market: USD INDEX (F90 / 098662). TFF Futures Only — no Legacy."
+}

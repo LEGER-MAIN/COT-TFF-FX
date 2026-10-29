@@ -1,0 +1,1 @@
+﻿abrir con ABRIR_CALENDARIO.bat o EJECUTAR_COT.bat --serve; no abrir HTML a doble clic.

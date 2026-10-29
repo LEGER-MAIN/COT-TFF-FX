@@ -1,0 +1,6397 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>COT TFF FX + DXY — Informe — Backtest</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #eef2f0;
+    --ink: #1a2220;
+    --accent: #0d5c4d;
+    --warn: #7a3e12;
+    --line: #c5d0cb;
+    --card: #fbfcfb;
+    --up: #0d5c4d;
+    --down: #8b2e2e;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+    color: var(--ink);
+    background:
+      radial-gradient(1100px 480px at 8% -8%, #cfe6df 0%, transparent 55%),
+      radial-gradient(800px 360px at 100% 0%, #d9e2ea 0%, transparent 50%),
+      var(--bg);
+    line-height: 1.45;
+  }
+  header {
+    padding: 2.2rem 1.5rem 1.2rem;
+    border-bottom: 1px solid var(--line);
+  }
+  header h1 {
+    margin: 0 0 .35rem;
+    font-size: clamp(1.6rem, 3vw, 2.2rem);
+    letter-spacing: -0.02em;
+    color: var(--accent);
+  }
+  header p { margin: .2rem 0; max-width: 72ch; }
+  main { padding: 1.25rem 1.5rem 3rem; max-width: 1200px; margin: 0 auto; }
+  .meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: .75rem;
+    margin: 1rem 0 1.25rem;
+  }
+  .meta div {
+    background: var(--card);
+    border: 1px solid var(--line);
+    padding: .75rem .9rem;
+  }
+  .meta span { display:block; font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; opacity: .7; }
+  .meta strong { font-size: 1.05rem; }
+  .meta em { display:block; font-style: normal; font-size: .8rem; opacity: .75; margin-top: .15rem; }
+  .warn { background: #fff1e4; border: 1px solid #e0b48a; padding: .9rem 1rem; margin-bottom: 1.25rem; color: var(--warn); }
+  .ok { background: #e8f4ef; border: 1px solid #9fc9b8; padding: .7rem 1rem; margin-bottom: 1.25rem; }
+  section.market {
+    margin: 1.5rem 0;
+    background: var(--card);
+    border: 1px solid var(--line);
+    padding: 1rem;
+  }
+  section.market h2 { margin: 0; color: var(--accent); }
+  section.market h3 { margin: 1rem 0 .4rem; font-size: 1rem; }
+  section.bias-strong-up { border-left: 4px solid var(--up); }
+  section.bias-up { border-left: 4px solid #3a8f78; }
+  section.bias-strong-down { border-left: 4px solid var(--down); }
+  section.bias-down { border-left: 4px solid #b05a5a; }
+  section.bias-neutral { border-left: 4px solid #8a9290; }
+  .sub { margin: .15rem 0 0.8rem; font-size: .85rem; opacity: .75; }
+  ul.mwarn { margin: .4rem 0 1rem; padding-left: 1.2rem; color: var(--warn); font-size: .9rem; }
+  .tbl-scroll-wrap { margin: .25rem 0 .75rem; }
+  .tbl-scroll-top {
+    display: none;
+    overflow-x: auto;
+    overflow-y: hidden;
+    height: 14px;
+    margin-bottom: 2px;
+  }
+  .tbl-scroll-wrap.needs-hscroll .tbl-scroll-top { display: block; }
+  .tbl-scroll-top-inner { height: 1px; pointer-events: none; }
+  .tbl-scroll-main { overflow-x: auto; }
+  table.tbl {
+    width: max-content;
+    min-width: 100%;
+    border-collapse: collapse;
+    font-size: .88rem;
+  }
+  table.tbl th, table.tbl td {
+    border-bottom: 1px solid var(--line);
+    padding: .45rem .5rem;
+    text-align: left;
+    white-space: nowrap;
+  }
+  table.tbl th { font-size: .75rem; text-transform: uppercase; letter-spacing: .03em; }
+  table.weekly-tbl td { white-space: normal; max-width: 28rem; vertical-align: top; }
+  section.weekly h3 { margin: 1.1rem 0 .35rem; color: var(--ink); font-size: 1.05rem; }
+  .prio-alta { color: var(--accent); font-weight: 600; }
+  footer { padding: 1rem 1.5rem 2rem; font-size: .85rem; opacity: .75; }
+  
+  /* Week picker (Forex Factory–style Sun–Sat) */
+  #week-picker {
+    margin: 1.5rem 0;
+    background: var(--card, #fbfcfb);
+    border: 1px solid var(--line, #c5d0cb);
+    padding: 1rem 1.1rem 1.15rem;
+  }
+  #week-picker h2 { margin: 0 0 .25rem; color: var(--accent, #0d5c4d); font-size: 1.15rem; }
+  #week-picker .sub { margin: 0 0 .85rem; font-size: .85rem; opacity: .78; max-width: 70ch; }
+  #week-picker .wp-quick {
+    display: flex; flex-wrap: wrap; gap: .4rem; margin: 0 0 .9rem;
+  }
+  #week-picker .wp-quick button {
+    font: inherit; font-size: .82rem; padding: .35rem .7rem;
+    border: 1px solid var(--line, #c5d0cb); background: #fff; color: var(--ink, #1a2220);
+    cursor: pointer;
+  }
+  #week-picker .wp-quick button:hover { border-color: var(--accent, #0d5c4d); color: var(--accent, #0d5c4d); }
+  #week-picker .wp-nav {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: .75rem; margin-bottom: .65rem; flex-wrap: wrap;
+  }
+  #week-picker .wp-nav button {
+    font: inherit; font-size: .85rem; padding: .3rem .65rem;
+    border: 1px solid var(--line, #c5d0cb); background: #fff; cursor: pointer;
+  }
+  #week-picker .wp-months {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
+  }
+  @media (max-width: 720px) {
+    #week-picker .wp-months { grid-template-columns: 1fr; }
+  }
+  #week-picker .wp-month h3 {
+    margin: 0 0 .45rem; font-size: .95rem; color: var(--ink, #1a2220);
+    text-align: center; font-weight: 600;
+  }
+  #week-picker table.wp-cal {
+    width: 100%; border-collapse: collapse; table-layout: fixed;
+    font-size: .82rem; user-select: none;
+  }
+  #week-picker table.wp-cal th {
+    font-size: .7rem; text-transform: uppercase; letter-spacing: .04em;
+    opacity: .65; padding: .25rem 0; font-weight: 600;
+  }
+  #week-picker table.wp-cal td {
+    text-align: center; padding: .15rem; vertical-align: middle;
+  }
+  #week-picker table.wp-cal td button {
+    width: 100%; aspect-ratio: 1; max-height: 2.4rem;
+    border: 1px solid transparent; background: transparent;
+    font: inherit; font-size: .85rem; cursor: pointer; color: inherit;
+    border-radius: 2px; padding: 0;
+  }
+  #week-picker table.wp-cal td.out button { opacity: .28; }
+  #week-picker table.wp-cal td.sat button { font-weight: 700; }
+  #week-picker table.wp-cal tr.wp-week:hover td button,
+  #week-picker table.wp-cal tr.wp-week.wp-hover td button {
+    background: rgba(13, 92, 77, 0.08);
+  }
+  #week-picker table.wp-cal tr.wp-week.wp-selected td {
+    background: rgba(13, 92, 77, 0.14);
+  }
+  #week-picker table.wp-cal tr.wp-week.wp-selected td.sat button {
+    background: var(--accent, #0d5c4d); color: #fff; border-color: var(--accent, #0d5c4d);
+  }
+  #week-picker .wp-footer {
+    display: flex; flex-wrap: wrap; align-items: center; gap: .75rem;
+    margin-top: .95rem; padding-top: .75rem; border-top: 1px solid var(--line, #c5d0cb);
+  }
+  #week-picker .wp-asof {
+    font-size: .95rem;
+  }
+  #week-picker .wp-asof strong { color: var(--accent, #0d5c4d); font-size: 1.05rem; }
+  #week-picker .wp-apply {
+    font: inherit; font-weight: 600; font-size: .9rem;
+    padding: .5rem 1.1rem; cursor: pointer;
+    background: var(--accent, #0d5c4d); color: #fff; border: none;
+  }
+  #week-picker .wp-apply:disabled { opacity: .45; cursor: not-allowed; }
+  #week-picker .wp-apply:hover:not(:disabled) { filter: brightness(1.06); }
+  #week-picker .wp-status {
+    font-size: .85rem; flex: 1 1 12rem; min-height: 1.2em;
+  }
+  #week-picker .wp-status.err {
+    color: var(--warn, #7a3e12);
+    white-space: pre-line; line-height: 1.45; max-width: 60ch;
+  }
+  #week-picker .wp-status.ok { color: var(--accent, #0d5c4d); }
+  #week-picker .wp-hint {
+    font-size: .8rem; opacity: .7; margin: .35rem 0 0; max-width: 70ch;
+  }
+  #week-picker code { font-size: .85em; }
+  /* Banner when opened as file:// (Aplicar cannot reach the local server) */
+  #cot-file-protocol-warn {
+    margin: 0; padding: .85rem 1.25rem;
+    background: #7a3e12; color: #fff; font: 600 .95rem/1.4 "Segoe UI", sans-serif;
+    border-bottom: 3px solid #5a2c0a;
+  }
+  #cot-file-protocol-warn a { color: #ffe8c8; font-weight: 700; }
+  #cot-file-protocol-warn code {
+    background: rgba(0,0,0,.25); padding: .1rem .35rem; font-size: .9em;
+  }
+
+</style>
+</head>
+<body>
+<header>
+  <h1>COT · TFF FX + USD INDEX (DXY) — Backtest</h1>
+  <p>Indicadores (Criterios 1–10, 15–22) y scoring dual provisional
+  (sesgo −100…+100 + calidad 0…100). Fuente CFTC Futures Only (F10 + F15 si hay + USD INDEX F90).
+  Precio: Yahoo Finance weekly (chart API). Posicionamiento reportado; <strong>no es señal de compra/venta</strong>.
+  Incluye <a href="#recomendacion-semanal">recomendación semanal</a> de pares swing
+  y <a href="#week-picker">calendario semanal</a> para regenerar backtest. <strong>Informe de backtest</strong> (histórico truncado a as-of).</p>
+</header>
+<main>
+  <div class="meta">
+    <div><span>As-of</span><strong>2023-02-21</strong></div>
+    <div><span>Desde</span><strong>2023-01-03</strong></div>
+    <div><span>Mercados</span><strong>11</strong></div>
+    <div><span>Semanas</span><strong>8</strong></div>
+    <div><span>Filas</span><strong>405</strong></div>
+    <div><span>Scoring</span><strong>0.3-provisional</strong></div>
+  </div>
+  
+  <section class="market" id="week-picker" data-server="http://127.0.0.1:8765" data-initial="2023-02-25">
+    <h2>Calendario semanal · backtest</h2>
+    <p class="sub">Estilo Forex Factory: la semana va de <strong>domingo a sábado</strong>.
+    Los datos COT se publican el viernes; el corte de la semana es el <strong>sábado</strong>
+    (parámetro <code>--as-of</code>). Haz clic en cualquier día para seleccionar esa semana.</p>
+    <div class="wp-quick" id="wp-quick"><button type="button" data-sat="2026-10-31">Esta semana</button><button type="button" data-sat="2026-10-24">Semana pasada</button><button type="button" data-sat="2026-10-17">Hace 2 semanas</button><button type="button" data-sat="2026-10-10">Hace 3 semanas</button><button type="button" data-sat="2026-10-03">Hace 4 semanas</button></div>
+    <div class="wp-nav">
+      <button type="button" id="wp-prev" aria-label="Mes anterior">← Anterior</button>
+      <span id="wp-nav-label" style="font-size:.9rem;opacity:.8"></span>
+      <button type="button" id="wp-next" aria-label="Mes siguiente">Siguiente →</button>
+    </div>
+    <div class="wp-months" id="wp-months"></div>
+    <div class="wp-footer">
+      <div class="wp-asof">Semana (sábado / as-of): <strong id="wp-sat">2023-02-25</strong></div>
+      <button type="button" class="wp-apply" id="wp-apply">Aplicar · regenerar informe</button>
+      <div class="wp-status" id="wp-status" role="status"></div>
+    </div>
+    <p class="wp-hint">NO abras este HTML a doble clic. Usa
+    <code>ABRIR_CALENDARIO.bat</code> o <code>EJECUTAR_COT.bat --serve</code>
+    y abre <a href="http://127.0.0.1:8765/">http://127.0.0.1:8765/</a>.
+    Sin servidor: <code>EJECUTAR_COT.bat --as-of 2023-02-25</code></p>
+  </section>
+  <script>
+(function () {
+  var root = document.getElementById("week-picker");
+  if (!root) return;
+  var SERVER = root.getAttribute("data-server") || "http://127.0.0.1:8765";
+  var IS_FILE = (location.protocol === "file:");
+  var DOW = ["Do", "Lu", "Ma", "Mi", "Ju", "Vi", "Sa"];
+  var MONTHS = ["Enero","Febrero","Marzo","Abril","Mayo","Junio",
+                "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+
+  if (IS_FILE && !document.getElementById("cot-file-protocol-warn")) {
+    var ban = document.createElement("div");
+    ban.id = "cot-file-protocol-warn";
+    ban.setAttribute("role", "alert");
+    ban.innerHTML =
+      "Estás viendo este informe como <code>file://</code> (doble clic en el HTML). " +
+      "<strong>Aplicar no funciona así.</strong> " +
+      "Cierra esta pestaña · doble clic en <code>ABRIR_CALENDARIO.bat</code> " +
+      "(o <code>EJECUTAR_COT.bat --serve</code>) · usa " +
+      "<a href=\"" + SERVER + "/\">" + SERVER + "/</a>.";
+    document.body.insertBefore(ban, document.body.firstChild);
+  }
+
+  function pad(n) { return n < 10 ? "0" + n : "" + n; }
+  function iso(d) {
+    return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+  }
+  function parseIso(s) {
+    var p = (s || "").slice(0, 10).split("-");
+    return new Date(+p[0], +p[1] - 1, +p[2]);
+  }
+  /** Saturday ending the Sun–Sat week that contains d. */
+  function saturdayOfWeek(d) {
+    var x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    var day = x.getDay(); /* Sun=0 … Sat=6 */
+    var add = (6 - day + 7) % 7;
+    x.setDate(x.getDate() + add);
+    return x;
+  }
+  function sundayOfWeek(d) {
+    var sat = saturdayOfWeek(d);
+    var sun = new Date(sat.getFullYear(), sat.getMonth(), sat.getDate());
+    sun.setDate(sun.getDate() - 6);
+    return sun;
+  }
+  function sameDay(a, b) {
+    return a.getFullYear() === b.getFullYear() &&
+           a.getMonth() === b.getMonth() &&
+           a.getDate() === b.getDate();
+  }
+  function addMonths(d, n) {
+    return new Date(d.getFullYear(), d.getMonth() + n, 1);
+  }
+
+  var selectedSat = saturdayOfWeek(parseIso(root.getAttribute("data-initial")));
+  var viewMonth = new Date(selectedSat.getFullYear(), selectedSat.getMonth(), 1);
+
+  function setStatus(msg, kind) {
+    var el = document.getElementById("wp-status");
+    el.textContent = msg || "";
+    el.className = "wp-status" + (kind ? " " + kind : "");
+  }
+
+  function fetchFailHelp(asOf, err) {
+    var detail = (err && err.message) ? err.message : String(err || "");
+    var lines = [];
+    if (IS_FILE) {
+      lines.push("Has abierto el HTML a doble clic (file://). Eso provoca Failed to fetch.");
+    } else {
+      lines.push("No hay servidor en " + SERVER + " (o el navegador bloqueó la petición).");
+    }
+    lines.push("");
+    lines.push("Pasos:");
+    lines.push("1. Cierra esta pestaña file://");
+    lines.push("2. Doble clic en ABRIR_CALENDARIO.bat  (o EJECUTAR_COT.bat --serve)");
+    lines.push("3. Espera a que abra " + SERVER + "/  — NO abras el .html a mano");
+    lines.push("4. Elige la semana y pulsa Aplicar ahí");
+    lines.push("");
+    lines.push("Sin servidor (solo una fecha): EJECUTAR_COT.bat --as-of " + asOf);
+    if (detail) lines.push("(" + detail + ")");
+    return lines.join("\n");
+  }
+
+  function selectSat(d) {
+    selectedSat = saturdayOfWeek(d);
+    document.getElementById("wp-sat").textContent = iso(selectedSat);
+    var hint = root.querySelector(".wp-hint code:last-of-type");
+    /* keep hint generic */
+    render();
+  }
+
+  function buildMonth(year, month) {
+    var wrap = document.createElement("div");
+    wrap.className = "wp-month";
+    var h = document.createElement("h3");
+    h.textContent = MONTHS[month] + " " + year;
+    wrap.appendChild(h);
+    var table = document.createElement("table");
+    table.className = "wp-cal";
+    var thead = document.createElement("thead");
+    var hr = document.createElement("tr");
+    DOW.forEach(function (lab) {
+      var th = document.createElement("th");
+      th.textContent = lab;
+      hr.appendChild(th);
+    });
+    thead.appendChild(hr);
+    table.appendChild(thead);
+    var tbody = document.createElement("tbody");
+    var first = new Date(year, month, 1);
+    var start = sundayOfWeek(first);
+    /* 6 weeks grid */
+    var cursor = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+    for (var w = 0; w < 6; w++) {
+      var tr = document.createElement("tr");
+      tr.className = "wp-week";
+      var weekSat = saturdayOfWeek(cursor);
+      if (sameDay(weekSat, selectedSat)) tr.classList.add("wp-selected");
+      for (var i = 0; i < 7; i++) {
+        var td = document.createElement("td");
+        var cell = new Date(cursor.getFullYear(), cursor.getMonth(), cursor.getDate());
+        if (cell.getMonth() !== month) td.classList.add("out");
+        if (cell.getDay() === 6) td.classList.add("sat");
+        var btn = document.createElement("button");
+        btn.type = "button";
+        btn.textContent = String(cell.getDate());
+        btn.setAttribute("data-date", iso(cell));
+        btn.addEventListener("click", (function (cd) {
+          return function () { selectSat(cd); };
+        })(cell));
+        td.appendChild(btn);
+        tr.appendChild(td);
+        cursor.setDate(cursor.getDate() + 1);
+      }
+      tr.addEventListener("mouseenter", function () { this.classList.add("wp-hover"); });
+      tr.addEventListener("mouseleave", function () { this.classList.remove("wp-hover"); });
+      tbody.appendChild(tr);
+    }
+    table.appendChild(tbody);
+    wrap.appendChild(table);
+    return wrap;
+  }
+
+  function render() {
+    var host = document.getElementById("wp-months");
+    host.innerHTML = "";
+    var m0 = viewMonth;
+    var m1 = addMonths(viewMonth, 1);
+    host.appendChild(buildMonth(m0.getFullYear(), m0.getMonth()));
+    host.appendChild(buildMonth(m1.getFullYear(), m1.getMonth()));
+    document.getElementById("wp-nav-label").textContent =
+      MONTHS[m0.getMonth()] + " – " + MONTHS[m1.getMonth()] + " " + m1.getFullYear();
+    document.getElementById("wp-sat").textContent = iso(selectedSat);
+  }
+
+  document.getElementById("wp-prev").addEventListener("click", function () {
+    viewMonth = addMonths(viewMonth, -1);
+    render();
+  });
+  document.getElementById("wp-next").addEventListener("click", function () {
+    viewMonth = addMonths(viewMonth, 1);
+    render();
+  });
+  document.getElementById("wp-quick").addEventListener("click", function (ev) {
+    var t = ev.target;
+    if (!t || !t.getAttribute) return;
+    var s = t.getAttribute("data-sat");
+    if (!s) return;
+    var d = parseIso(s);
+    viewMonth = new Date(d.getFullYear(), d.getMonth(), 1);
+    selectSat(d);
+  });
+
+  document.getElementById("wp-apply").addEventListener("click", function () {
+    var asOf = iso(selectedSat);
+    var applyBtn = document.getElementById("wp-apply");
+    applyBtn.disabled = true;
+    setStatus("Regenerando backtest as-of=" + asOf + "… (puede tardar unos minutos)", "");
+    var url = SERVER + "/run?as_of=" + encodeURIComponent(asOf);
+    /* Prefer POST; fall back to navigation GET if fetch blocked (file://). */
+    function goGet() {
+      window.location.href = url;
+    }
+    if (typeof fetch !== "function") { goGet(); return; }
+    fetch(url, { method: "POST", headers: { "Accept": "application/json" } })
+      .then(function (r) {
+        if (r.redirected) { window.location.href = r.url; return null; }
+        var ct = r.headers.get("content-type") || "";
+        if (ct.indexOf("json") >= 0) {
+          return r.json().then(function (j) {
+            if (!r.ok) throw new Error((j && j.error) || ("HTTP " + r.status));
+            if (j.html_url) { window.location.href = j.html_url; return; }
+            if (j.redirect) { window.location.href = j.redirect; return; }
+            throw new Error("Respuesta sin html_url");
+          });
+        }
+        if (r.ok) { goGet(); return null; }
+        throw new Error("HTTP " + r.status);
+      })
+      .catch(function (err) {
+        setStatus(fetchFailHelp(asOf, err), "err");
+        applyBtn.disabled = false;
+      });
+  });
+
+  render();
+})();
+  </script>
+
+  
+  <section class="market" id="backtest-as-of">
+    <h2>Backtest · as-of</h2>
+    <p class="sub">Modo retrospectivo — mismos scoring y recomendación semanal que el informe en vivo.</p>
+    <div class="meta">
+      <div><span>As-of solicitado</span><strong>2023-02-25</strong></div>
+      <div><span>Semana COT efectiva</span><strong>2023-02-21</strong></div>
+      <div><span>Look-ahead</span><strong>ninguno</strong></div>
+    </div>
+    <p><strong>Solo datos hasta esta semana.</strong> Backtest semanal: solo datos COT/precio con fecha &lt;= as-of (report_date / price_date). Sin look-ahead: indicadores, percentiles, scoring y recomendación semanal usan únicamente historial hasta esa semana.</p>
+    <p>Filtro: <code>report_date &lt;= as-of</code> y <code>price_date &lt;= as-of</code>
+    aplicados <em>antes</em> de indicadores, percentiles, scoring y pares swing.</p>
+  </section>
+
+  <div class="warn"><h2>Advertencias de calidad de datos</h2><ul><li>Markets with &lt;52 weekly observations (percentiles limited): AUSTRALIAN DOLLAR - CHICAGO MERCANTILE EXCHANGE (8w), BRAZILIAN REAL - CHICAGO MERCANTILE EXCHANGE (8w), BRITISH POUND - CHICAGO MERCANTILE EXCHANGE (8w), CANADIAN DOLLAR - CHICAGO MERCANTILE EXCHANGE (8w), EURO FX - CHICAGO MERCANTILE EXCHANGE (8w), EURO FX/BRITISH POUND XRATE - CHICAGO MERCANTILE EXCHANGE (8w), EURO FX/JAPANESE YEN XRATE - CHICAGO MERCANTILE EXCHANGE (1w), JAPANESE YEN - CHICAGO MERCANTILE EXCHANGE (8w), NZ DOLLAR - CHICAGO MERCANTILE EXCHANGE (8w), SWISS FRANC - CHICAGO MERCANTILE EXCHANGE (8w), USD INDEX - ICE FUTURES U.S. (8w)</li></ul></div>
+  
+  <div class="warn"><strong>Umbrales provisionales.</strong> Sesgo (−100…+100) y calidad (0…100) usan reglas en <code>config/scoring_rules.json</code>. No son señales de compra/venta ni probabilidades.</div>
+  <section class="market">
+    <h2>Sesgo direccional + calidad de evidencia</h2>
+    <p class="sub">Foco LF + Asset Managers; Other/Nonreportable peso complementario bajo; Dealers y Spread solo contexto. Precio Yahoo si está mapeado. Horizontes ponderados (sem/1m/3m/6m/1y).</p>
+    <div class="tbl-scroll-wrap"><div class="tbl-scroll-top" aria-hidden="true"><div class="tbl-scroll-top-inner"></div></div><div class="tbl-scroll-main"><table class="dataframe tbl">
+  <thead>
+    <tr style="text-align: right;">
+      <th>market</th>
+      <th>combined_bias</th>
+      <th>combined_bias_label</th>
+      <th>evidence_quality</th>
+      <th>LF_bias</th>
+      <th>AM_bias</th>
+      <th>OR_bias</th>
+      <th>NR_bias</th>
+      <th>LF_pctl_52w</th>
+      <th>AM_pctl_52w</th>
+      <th>c22_weekly_change_agreement</th>
+      <th>price_ticker</th>
+      <th>price_close</th>
+      <th>dealer_nn_pct</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>AUSTRALIAN DOLLAR</td>
+      <td>-0.54</td>
+      <td>neutral_o_mixto</td>
+      <td>22.0</td>
+      <td>50.31</td>
+      <td>-56.56</td>
+      <td>0.00</td>
+      <td>-56.56</td>
+      <td>None</td>
+      <td>None</td>
+      <td>desacuerdo_cambios</td>
+      <td>6A=F</td>
+      <td>0.67</td>
+      <td>6.64</td>
+    </tr>
+    <tr>
+      <td>BRAZILIAN REAL</td>
+      <td>23.99</td>
+      <td>neutral_o_mixto</td>
+      <td>18.0</td>
+      <td>50.31</td>
+      <td>-5.00</td>
+      <td>-4.69</td>
+      <td>41.25</td>
+      <td>None</td>
+      <td>None</td>
+      <td>desacuerdo_cambios</td>
+      <td>6L=F</td>
+      <td>0.19</td>
+      <td>-73.47</td>
+    </tr>
+    <tr>
+      <td>BRITISH POUND</td>
+      <td>-21.25</td>
+      <td>neutral_o_mixto</td>
+      <td>55.0</td>
+      <td>3.75</td>
+      <td>-56.56</td>
+      <td>0.00</td>
+      <td>-12.50</td>
+      <td>None</td>
+      <td>None</td>
+      <td>mixto_un_lado_neutral</td>
+      <td>6B=F</td>
+      <td>1.19</td>
+      <td>21.05</td>
+    </tr>
+    <tr>
+      <td>CANADIAN DOLLAR</td>
+      <td>-9.53</td>
+      <td>neutral_o_mixto</td>
+      <td>40.0</td>
+      <td>-13.44</td>
+      <td>-1.25</td>
+      <td>-2.19</td>
+      <td>-52.81</td>
+      <td>None</td>
+      <td>None</td>
+      <td>desacuerdo_cambios</td>
+      <td>6C=F</td>
+      <td>0.73</td>
+      <td>33.15</td>
+    </tr>
+    <tr>
+      <td>EURO FX</td>
+      <td>16.64</td>
+      <td>neutral_o_mixto</td>
+      <td>21.0</td>
+      <td>44.06</td>
+      <td>-4.06</td>
+      <td>-45.00</td>
+      <td>0.00</td>
+      <td>None</td>
+      <td>None</td>
+      <td>mixto_un_lado_neutral</td>
+      <td>6E=F</td>
+      <td>1.06</td>
+      <td>-63.47</td>
+    </tr>
+    <tr>
+      <td>EURO FX/BRITISH POUND XRATE</td>
+      <td>-23.59</td>
+      <td>neutral_o_mixto</td>
+      <td>50.0</td>
+      <td>-49.06</td>
+      <td>0.00</td>
+      <td>7.19</td>
+      <td>-5.00</td>
+      <td>None</td>
+      <td>None</td>
+      <td>mixto_un_lado_neutral</td>
+      <td>RP=F</td>
+      <td>0.88</td>
+      <td>-31.43</td>
+    </tr>
+    <tr>
+      <td>EURO FX/JAPANESE YEN XRATE</td>
+      <td>0.00</td>
+      <td>neutral_o_mixto</td>
+      <td>25.0</td>
+      <td>0.00</td>
+      <td>0.00</td>
+      <td>0.00</td>
+      <td>0.00</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>RY=F</td>
+      <td>140.06</td>
+      <td>8.16</td>
+    </tr>
+    <tr>
+      <td>JAPANESE YEN</td>
+      <td>-4.11</td>
+      <td>neutral_o_mixto</td>
+      <td>22.0</td>
+      <td>10.00</td>
+      <td>-16.25</td>
+      <td>0.00</td>
+      <td>-56.56</td>
+      <td>None</td>
+      <td>None</td>
+      <td>desacuerdo_cambios</td>
+      <td>6J=F</td>
+      <td>0.01</td>
+      <td>10.40</td>
+    </tr>
+    <tr>
+      <td>NZ DOLLAR</td>
+      <td>-7.56</td>
+      <td>neutral_o_mixto</td>
+      <td>53.0</td>
+      <td>-1.25</td>
+      <td>-16.25</td>
+      <td>3.44</td>
+      <td>-16.25</td>
+      <td>None</td>
+      <td>None</td>
+      <td>acuerdo_deterioro</td>
+      <td>6N=F</td>
+      <td>0.62</td>
+      <td>-4.31</td>
+    </tr>
+    <tr>
+      <td>SWISS FRANC</td>
+      <td>-4.79</td>
+      <td>neutral_o_mixto</td>
+      <td>22.0</td>
+      <td>10.00</td>
+      <td>-16.25</td>
+      <td>-9.69</td>
+      <td>-56.56</td>
+      <td>None</td>
+      <td>None</td>
+      <td>desacuerdo_cambios</td>
+      <td>6S=F</td>
+      <td>1.06</td>
+      <td>32.97</td>
+    </tr>
+    <tr>
+      <td>USD INDEX</td>
+      <td>0.72</td>
+      <td>neutral_o_mixto</td>
+      <td>0.0</td>
+      <td>-7.19</td>
+      <td>7.81</td>
+      <td>7.81</td>
+      <td>12.50</td>
+      <td>None</td>
+      <td>None</td>
+      <td>desacuerdo_cambios</td>
+      <td>DX-Y.NYB</td>
+      <td>105.21</td>
+      <td>-35.20</td>
+    </tr>
+  </tbody>
+</table></div></div>
+  </section>
+
+  
+  <section class="market weekly" id="recomendacion-semanal">
+    <h2>Recomendación semanal</h2>
+    <p class="sub">Pares swing agrupados por sección tras el scoring COT.
+    Prioridad según |sesgo|, calidad de evidencia y confirmación de precio.
+    Avisos si hay exposición correlacionada (p. ej. USDJPY + GBPJPY).
+    <strong>No es señal de compra automática.</strong></p>
+    <h3>Majors USD</h3>
+    <div class="tbl-scroll-wrap"><div class="tbl-scroll-top" aria-hidden="true"><div class="tbl-scroll-top-inner"></div></div><div class="tbl-scroll-main"><table class="dataframe tbl weekly-tbl">
+  <thead>
+    <tr style="text-align: right;">
+      <th>rank_in_section</th>
+      <th>symbol</th>
+      <th>priority</th>
+      <th>pair_bias</th>
+      <th>pair_bias_label</th>
+      <th>evidence_quality</th>
+      <th>opportunity_score</th>
+      <th>direction_hint</th>
+      <th>price_confirm_state</th>
+      <th>coverage</th>
+      <th>cot_backed</th>
+      <th>por_que</th>
+      <th>riesgo</th>
+      <th>correlation_warnings</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>GBPUSD</td>
+      <td>Prioridad media</td>
+      <td>-21.25</td>
+      <td>neutral_o_mixto</td>
+      <td>55.0</td>
+      <td>13.09</td>
+      <td>bajista_par</td>
+      <td>precio_confirma</td>
+      <td>direct</td>
+      <td>True</td>
+      <td>GBPUSD: sesgo bajista del par (sesgo=-21.2, neutral o mixto). Calidad de evidencia COT=55/100. COT directo: BRITISH POUND. El precio semanal/mensual tiende a confirmar el posicionamiento. No es señal de compra automática.</td>
+      <td>Umbrales de scoring provisionales (no calibrados). Calidad de evidencia moderada/baja. Swing: gestionar tamaño, stops y evento macro; no duplicar el mismo factor USD/JPY.</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>USDCAD</td>
+      <td>Prioridad baja</td>
+      <td>9.53</td>
+      <td>neutral_o_mixto</td>
+      <td>40.0</td>
+      <td>4.27</td>
+      <td>mixto</td>
+      <td>precio_confirma</td>
+      <td>direct</td>
+      <td>True</td>
+      <td>USDCAD: sesgo mixto / lateral (sesgo=9.5, neutral o mixto). Calidad de evidencia COT=40/100. COT directo: CANADIAN DOLLAR (invertido vs futuros). El precio semanal/mensual tiende a confirmar el posicionamiento. No es señal de compra automática.</td>
+      <td>Umbrales de scoring provisionales (no calibrados). Calidad de evidencia moderada/baja. Swing: gestionar tamaño, stops y evento macro; no duplicar el mismo factor USD/JPY.</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>EURUSD</td>
+      <td>Prioridad baja</td>
+      <td>16.64</td>
+      <td>neutral_o_mixto</td>
+      <td>21.0</td>
+      <td>3.08</td>
+      <td>alcista_par</td>
+      <td>precio_diverge</td>
+      <td>direct</td>
+      <td>True</td>
+      <td>EURUSD: sesgo alcista del par (sesgo=16.6, neutral o mixto). Calidad de evidencia COT=21/100. COT directo: EURO FX. Hay divergencias precio×posicionamiento — bajar convicción operativa. No es señal de compra automática.</td>
+      <td>Umbrales de scoring provisionales (no calibrados). Calidad de evidencia moderada/baja. Divergencia precio vs COT. Correlación: Evitar duplicar con GBPUSD (clusters: g10_long_usd) Swing: gestionar tamaño, stops y evento macro; no duplicar el mismo factor USD/JPY.</td>
+      <td>Evitar duplicar con GBPUSD (clusters: g10_long_usd)</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>USDCHF</td>
+      <td>Prioridad baja</td>
+      <td>4.79</td>
+      <td>neutral_o_mixto</td>
+      <td>22.0</td>
+      <td>1.05</td>
+      <td>mixto</td>
+      <td>precio_mixto_o_lateral</td>
+      <td>direct</td>
+      <td>True</td>
+      <td>USDCHF: sesgo mixto / lateral (sesgo=4.8, neutral o mixto). Calidad de evidencia COT=22/100. COT directo: SWISS FRANC (invertido vs futuros). No es señal de compra automática.</td>
+      <td>Umbrales de scoring provisionales (no calibrados). Calidad de evidencia moderada/baja. Swing: gestionar tamaño, stops y evento macro; no duplicar el mismo factor USD/JPY.</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td>USDJPY</td>
+      <td>Prioridad baja</td>
+      <td>4.11</td>
+      <td>neutral_o_mixto</td>
+      <td>22.0</td>
+      <td>0.90</td>
+      <td>mixto</td>
+      <td>precio_mixto_o_lateral</td>
+      <td>direct</td>
+      <td>True</td>
+      <td>USDJPY: sesgo mixto / lateral (sesgo=4.1, neutral o mixto). Calidad de evidencia COT=22/100. COT directo: JAPANESE YEN (invertido vs futuros). No es señal de compra automática.</td>
+      <td>Umbrales de scoring provisionales (no calibrados). Calidad de evidencia moderada/baja. Swing: gestionar tamaño, stops y evento macro; no duplicar el mismo factor USD/JPY.</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td>AUDUSD</td>
+      <td>Prioridad baja</td>
+      <td>-0.54</td>
+      <td>neutral_o_mixto</td>
+      <td>22.0</td>
+      <td>0.12</td>
+      <td>mixto</td>
+      <td>precio_mixto_o_lateral</td>
+      <td>direct</td>
+      <td>True</td>
+      <td>AUDUSD: sesgo mixto / lateral (sesgo=-0.5, neutral o mixto). Calidad de evidencia COT=22/100. COT directo: AUSTRALIAN DOLLAR. No es señal de compra automática.</td>
+      <td>Umbrales de scoring provisionales (no calibrados). Calidad de evidencia moderada/baja. Swing: gestionar tamaño, stops y evento macro; no duplicar el mismo factor USD/JPY.</td>
+      <td></td>
+    </tr>
+  </tbody>
+</table></div></div>
+    <h3>Crosses</h3>
+    <div class="tbl-scroll-wrap"><div class="tbl-scroll-top" aria-hidden="true"><div class="tbl-scroll-top-inner"></div></div><div class="tbl-scroll-main"><table class="dataframe tbl weekly-tbl">
+  <thead>
+    <tr style="text-align: right;">
+      <th>rank_in_section</th>
+      <th>symbol</th>
+      <th>priority</th>
+      <th>pair_bias</th>
+      <th>pair_bias_label</th>
+      <th>evidence_quality</th>
+      <th>opportunity_score</th>
+      <th>direction_hint</th>
+      <th>price_confirm_state</th>
+      <th>coverage</th>
+      <th>cot_backed</th>
+      <th>por_que</th>
+      <th>riesgo</th>
+      <th>correlation_warnings</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>EURGBP</td>
+      <td>Prioridad baja</td>
+      <td>-23.59</td>
+      <td>neutral_o_mixto</td>
+      <td>50.0</td>
+      <td>11.79</td>
+      <td>bajista_par</td>
+      <td>precio_mixto_o_lateral</td>
+      <td>direct</td>
+      <td>True</td>
+      <td>EURGBP: sesgo bajista del par (sesgo=-23.6, neutral o mixto). Calidad de evidencia COT=50/100. COT directo: EURO FX/BRITISH POUND XRATE. No es señal de compra automática.</td>
+      <td>Umbrales de scoring provisionales (no calibrados). Calidad de evidencia moderada/baja. Swing: gestionar tamaño, stops y evento macro; no duplicar el mismo factor USD/JPY.</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>GBPJPY</td>
+      <td>Prioridad baja</td>
+      <td>-8.57</td>
+      <td>neutral_o_mixto</td>
+      <td>38.5</td>
+      <td>3.70</td>
+      <td>mixto</td>
+      <td>precio_confirma</td>
+      <td>derived</td>
+      <td>True</td>
+      <td>GBPJPY: sesgo mixto / lateral (sesgo=-8.6, neutral o mixto). Calidad de evidencia COT=38/100. Fuentes COT: BRITISH POUND, JAPANESE YEN. El precio semanal/mensual tiende a confirmar el posicionamiento. Sesgo derivado de varios mercados COT (no contrato dedicado). No es señal de compra automática.</td>
+      <td>Umbrales de scoring provisionales (no calibrados). Calidad de evidencia moderada/baja. Swing: gestionar tamaño, stops y evento macro; no duplicar el mismo factor USD/JPY.</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>EURJPY</td>
+      <td>Prioridad baja</td>
+      <td>0.00</td>
+      <td>neutral_o_mixto</td>
+      <td>25.0</td>
+      <td>0.00</td>
+      <td>mixto</td>
+      <td>sin_dato_precio</td>
+      <td>direct</td>
+      <td>True</td>
+      <td>EURJPY: sesgo mixto / lateral (sesgo=0.0, neutral o mixto). Calidad de evidencia COT=25/100. COT directo: EURO FX/JAPANESE YEN XRATE. Sin confirmación de precio mapeada (solo COT). No es señal de compra automática.</td>
+      <td>Umbrales de scoring provisionales (no calibrados). Calidad de evidencia moderada/baja. Swing: gestionar tamaño, stops y evento macro; no duplicar el mismo factor USD/JPY.</td>
+      <td></td>
+    </tr>
+  </tbody>
+</table></div></div>
+    <h3>Índice DXY</h3>
+    <div class="tbl-scroll-wrap"><div class="tbl-scroll-top" aria-hidden="true"><div class="tbl-scroll-top-inner"></div></div><div class="tbl-scroll-main"><table class="dataframe tbl weekly-tbl">
+  <thead>
+    <tr style="text-align: right;">
+      <th>rank_in_section</th>
+      <th>symbol</th>
+      <th>priority</th>
+      <th>pair_bias</th>
+      <th>pair_bias_label</th>
+      <th>evidence_quality</th>
+      <th>opportunity_score</th>
+      <th>direction_hint</th>
+      <th>price_confirm_state</th>
+      <th>coverage</th>
+      <th>cot_backed</th>
+      <th>por_que</th>
+      <th>riesgo</th>
+      <th>correlation_warnings</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>DXY</td>
+      <td>Prioridad baja</td>
+      <td>0.72</td>
+      <td>neutral_o_mixto</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>mixto</td>
+      <td>precio_diverge</td>
+      <td>direct</td>
+      <td>True</td>
+      <td>DXY: sesgo mixto / lateral (sesgo=0.7, neutral o mixto). Calidad de evidencia COT=0/100. COT directo: USD INDEX. Hay divergencias precio×posicionamiento — bajar convicción operativa. No es señal de compra automática.</td>
+      <td>Umbrales de scoring provisionales (no calibrados). Calidad de evidencia moderada/baja. Divergencia precio vs COT. Swing: gestionar tamaño, stops y evento macro; no duplicar el mismo factor USD/JPY.</td>
+      <td></td>
+    </tr>
+  </tbody>
+</table></div></div>
+    <h3>Opcionales (NZD/BRL)</h3>
+    <div class="tbl-scroll-wrap"><div class="tbl-scroll-top" aria-hidden="true"><div class="tbl-scroll-top-inner"></div></div><div class="tbl-scroll-main"><table class="dataframe tbl weekly-tbl">
+  <thead>
+    <tr style="text-align: right;">
+      <th>rank_in_section</th>
+      <th>symbol</th>
+      <th>priority</th>
+      <th>pair_bias</th>
+      <th>pair_bias_label</th>
+      <th>evidence_quality</th>
+      <th>opportunity_score</th>
+      <th>direction_hint</th>
+      <th>price_confirm_state</th>
+      <th>coverage</th>
+      <th>cot_backed</th>
+      <th>por_que</th>
+      <th>riesgo</th>
+      <th>correlation_warnings</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>NZDUSD</td>
+      <td>Prioridad baja</td>
+      <td>-7.56</td>
+      <td>neutral_o_mixto</td>
+      <td>53.0</td>
+      <td>4.49</td>
+      <td>mixto</td>
+      <td>precio_confirma</td>
+      <td>direct</td>
+      <td>True</td>
+      <td>NZDUSD: sesgo mixto / lateral (sesgo=-7.6, neutral o mixto). Calidad de evidencia COT=53/100. COT directo: NZ DOLLAR. El precio semanal/mensual tiende a confirmar el posicionamiento. No es señal de compra automática.</td>
+      <td>Umbrales de scoring provisionales (no calibrados). Calidad de evidencia moderada/baja. Swing: gestionar tamaño, stops y evento macro; no duplicar el mismo factor USD/JPY.</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>USDBRL</td>
+      <td>Prioridad baja</td>
+      <td>-23.99</td>
+      <td>neutral_o_mixto</td>
+      <td>18.0</td>
+      <td>3.80</td>
+      <td>bajista_par</td>
+      <td>precio_diverge</td>
+      <td>direct</td>
+      <td>True</td>
+      <td>USDBRL: sesgo bajista del par (sesgo=-24.0, neutral o mixto). Calidad de evidencia COT=18/100. COT directo: BRAZILIAN REAL (invertido vs futuros). Hay divergencias precio×posicionamiento — bajar convicción operativa. No es señal de compra automática.</td>
+      <td>Umbrales de scoring provisionales (no calibrados). Calidad de evidencia moderada/baja. Divergencia precio vs COT. Swing: gestionar tamaño, stops y evento macro; no duplicar el mismo factor USD/JPY.</td>
+      <td></td>
+    </tr>
+  </tbody>
+</table></div></div>
+  </section>
+
+  
+  <section class="market bias-neutral">
+    <h2>AUSTRALIAN DOLLAR</h2>
+    <p class="sub">AUSTRALIAN DOLLAR - CHICAGO MERCANTILE EXCHANGE</p>
+    <div class="meta">
+      <div><span>Sesgo combinado</span><strong>-0.54</strong>
+        <em>neutral_o_mixto</em></div>
+      <div><span>Calidad evidencia</span><strong>22.0</strong>/100</div>
+      <div><span>LF bias</span><strong>50.31</strong></div>
+      <div><span>AM bias</span><strong>-56.56</strong></div>
+      <div><span>OR / NR bias</span><strong>0.0 / -56.56</strong></div>
+      <div><span>C22 Δ LF–AM</span><strong>desacuerdo_cambios</strong></div>
+      <div><span>Precio</span><strong>6A=F</strong>
+        <em>0.6729</em></div>
+      <div><span>Dealer NN% (ctx)</span><strong>6.64</strong></div>
+    </div>
+    <ul class='mwarn'><li>Umbrales PROVISIONALES (config/scoring_rules.json) — no calibrados por mercado.</li><li>Historial corto (8 semanas); percentiles y horizontes largos menos fiables.</li><li>Percentil 156w no disponible o incompleto (historial &lt; umbral configurado).</li><li>Divergencia LF vs Asset Managers: direcciones opuestas en sesgo de grupo.</li><li>C22 niveles: gap NN LF–AM=10.6192 pts (diferencia de nivel, no implica desacuerdo de cambios).</li><li>C22 cambios: LF y AM en desacuerdo en Δ neto semanal.</li><li>Asset Manager / Institutional: cambio de régimen hace 2 sem. (None); contexto, no entrada automática.</li><li>Leveraged Funds: cambio de régimen hace 0 sem. (cruzo_a_neto_positivo); contexto, no entrada automática.</li></ul>
+    <h3>Desglose por horizonte</h3>
+    <div class="tbl-scroll-wrap"><div class="tbl-scroll-top" aria-hidden="true"><div class="tbl-scroll-top-inner"></div></div><div class="tbl-scroll-main"><table class="dataframe tbl">
+  <thead>
+    <tr style="text-align: right;">
+      <th>grupo</th>
+      <th>horizonte</th>
+      <th>direccion</th>
+      <th>Δ neto</th>
+      <th>Δ neto/OI %</th>
+      <th>precio %</th>
+      <th>precio dir</th>
+      <th>confirmación</th>
+      <th>score (−2…+2)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>weekly</td>
+      <td>bajista</td>
+      <td>-7206.0</td>
+      <td>-5.84</td>
+      <td>-2.26</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+      <td>-1.75</td>
+    </tr>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>monthly</td>
+      <td>bajista</td>
+      <td>-6097.0</td>
+      <td>-4.94</td>
+      <td>-5.43</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+      <td>-1.38</td>
+    </tr>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>quarterly</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>-1.00</td>
+    </tr>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>semiannual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>-1.00</td>
+    </tr>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>annual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>-1.00</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>weekly</td>
+      <td>alcista</td>
+      <td>11614.0</td>
+      <td>9.41</td>
+      <td>-2.26</td>
+      <td>baja</td>
+      <td>divergencia_neto_sube_precio_baja</td>
+      <td>1.25</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>monthly</td>
+      <td>alcista</td>
+      <td>15408.0</td>
+      <td>12.48</td>
+      <td>-5.43</td>
+      <td>baja</td>
+      <td>divergencia_neto_sube_precio_baja</td>
+      <td>0.88</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>quarterly</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>1.00</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>semiannual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>1.00</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>annual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>1.00</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>weekly</td>
+      <td>bajista</td>
+      <td>-5433.0</td>
+      <td>-4.40</td>
+      <td>-2.26</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+      <td>-1.75</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>monthly</td>
+      <td>bajista</td>
+      <td>-3726.0</td>
+      <td>-3.02</td>
+      <td>-5.43</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+      <td>-1.38</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>quarterly</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>-1.00</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>semiannual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>-1.00</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>annual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>-1.00</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>weekly</td>
+      <td>neutral</td>
+      <td>0.0</td>
+      <td>0.00</td>
+      <td>-2.26</td>
+      <td>baja</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>monthly</td>
+      <td>neutral</td>
+      <td>192.0</td>
+      <td>0.16</td>
+      <td>-5.43</td>
+      <td>baja</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>quarterly</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>semiannual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>annual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+  </tbody>
+</table></div></div>
+  </section>
+
+  <section class="market bias-neutral">
+    <h2>BRAZILIAN REAL</h2>
+    <p class="sub">BRAZILIAN REAL - CHICAGO MERCANTILE EXCHANGE</p>
+    <div class="meta">
+      <div><span>Sesgo combinado</span><strong>23.99</strong>
+        <em>neutral_o_mixto</em></div>
+      <div><span>Calidad evidencia</span><strong>18.0</strong>/100</div>
+      <div><span>LF bias</span><strong>50.31</strong></div>
+      <div><span>AM bias</span><strong>-5.0</strong></div>
+      <div><span>OR / NR bias</span><strong>-4.69 / 41.25</strong></div>
+      <div><span>C22 Δ LF–AM</span><strong>desacuerdo_cambios</strong></div>
+      <div><span>Precio</span><strong>6L=F</strong>
+        <em>0.1919</em></div>
+      <div><span>Dealer NN% (ctx)</span><strong>-73.47</strong></div>
+    </div>
+    <ul class='mwarn'><li>Umbrales PROVISIONALES (config/scoring_rules.json) — no calibrados por mercado.</li><li>Historial corto (8 semanas); percentiles y horizontes largos menos fiables.</li><li>Percentil 156w no disponible o incompleto (historial &lt; umbral configurado).</li><li>C22 niveles: gap NN LF–AM=50.818 pts (diferencia de nivel, no implica desacuerdo de cambios).</li><li>C22 cambios: LF y AM en desacuerdo en Δ neto semanal.</li><li>Divergencias precio × posicionamiento en uno o más horizontes (no = reversión automática).</li><li>Leveraged Funds: cambio de régimen hace 2 sem. (None); contexto, no entrada automática.</li></ul>
+    <h3>Desglose por horizonte</h3>
+    <div class="tbl-scroll-wrap"><div class="tbl-scroll-top" aria-hidden="true"><div class="tbl-scroll-top-inner"></div></div><div class="tbl-scroll-main"><table class="dataframe tbl">
+  <thead>
+    <tr style="text-align: right;">
+      <th>grupo</th>
+      <th>horizonte</th>
+      <th>direccion</th>
+      <th>Δ neto</th>
+      <th>Δ neto/OI %</th>
+      <th>precio %</th>
+      <th>precio dir</th>
+      <th>confirmación</th>
+      <th>score (−2…+2)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>weekly</td>
+      <td>bajista</td>
+      <td>-1314.0</td>
+      <td>-2.78</td>
+      <td>-0.80</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+      <td>-1.75</td>
+    </tr>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>monthly</td>
+      <td>alcista</td>
+      <td>6618.0</td>
+      <td>14.01</td>
+      <td>-1.94</td>
+      <td>baja</td>
+      <td>divergencia_neto_sube_precio_baja</td>
+      <td>0.50</td>
+    </tr>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>quarterly</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>semiannual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>annual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>weekly</td>
+      <td>alcista</td>
+      <td>1055.0</td>
+      <td>2.23</td>
+      <td>-0.80</td>
+      <td>baja</td>
+      <td>divergencia_neto_sube_precio_baja</td>
+      <td>1.25</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>monthly</td>
+      <td>alcista</td>
+      <td>6642.0</td>
+      <td>14.06</td>
+      <td>-1.94</td>
+      <td>baja</td>
+      <td>divergencia_neto_sube_precio_baja</td>
+      <td>0.88</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>quarterly</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>1.00</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>semiannual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>1.00</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>annual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>1.00</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>weekly</td>
+      <td>neutral</td>
+      <td>197.0</td>
+      <td>0.42</td>
+      <td>-0.80</td>
+      <td>baja</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>monthly</td>
+      <td>alcista</td>
+      <td>749.0</td>
+      <td>1.59</td>
+      <td>-1.94</td>
+      <td>baja</td>
+      <td>divergencia_neto_sube_precio_baja</td>
+      <td>0.50</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>quarterly</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>1.00</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>semiannual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>1.00</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>annual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>1.00</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>weekly</td>
+      <td>neutral</td>
+      <td>112.0</td>
+      <td>0.24</td>
+      <td>-0.80</td>
+      <td>baja</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>monthly</td>
+      <td>bajista</td>
+      <td>-895.0</td>
+      <td>-1.89</td>
+      <td>-1.94</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+      <td>-0.62</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>quarterly</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>semiannual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>annual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+  </tbody>
+</table></div></div>
+  </section>
+
+  <section class="market bias-neutral">
+    <h2>BRITISH POUND</h2>
+    <p class="sub">BRITISH POUND - CHICAGO MERCANTILE EXCHANGE</p>
+    <div class="meta">
+      <div><span>Sesgo combinado</span><strong>-21.25</strong>
+        <em>neutral_o_mixto</em></div>
+      <div><span>Calidad evidencia</span><strong>55.0</strong>/100</div>
+      <div><span>LF bias</span><strong>3.75</strong></div>
+      <div><span>AM bias</span><strong>-56.56</strong></div>
+      <div><span>OR / NR bias</span><strong>0.0 / -12.5</strong></div>
+      <div><span>C22 Δ LF–AM</span><strong>mixto_un_lado_neutral</strong></div>
+      <div><span>Precio</span><strong>6B=F</strong>
+        <em>1.1947</em></div>
+      <div><span>Dealer NN% (ctx)</span><strong>21.05</strong></div>
+    </div>
+    <ul class='mwarn'><li>Umbrales PROVISIONALES (config/scoring_rules.json) — no calibrados por mercado.</li><li>Historial corto (8 semanas); percentiles y horizontes largos menos fiables.</li><li>Percentil 156w no disponible o incompleto (historial &lt; umbral configurado).</li><li>C22 niveles: gap NN LF–AM=38.9177 pts (diferencia de nivel, no implica desacuerdo de cambios).</li></ul>
+    <h3>Desglose por horizonte</h3>
+    <div class="tbl-scroll-wrap"><div class="tbl-scroll-top" aria-hidden="true"><div class="tbl-scroll-top-inner"></div></div><div class="tbl-scroll-main"><table class="dataframe tbl">
+  <thead>
+    <tr style="text-align: right;">
+      <th>grupo</th>
+      <th>horizonte</th>
+      <th>direccion</th>
+      <th>Δ neto</th>
+      <th>Δ neto/OI %</th>
+      <th>precio %</th>
+      <th>precio dir</th>
+      <th>confirmación</th>
+      <th>score (−2…+2)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>weekly</td>
+      <td>bajista</td>
+      <td>-5522.0</td>
+      <td>-2.59</td>
+      <td>-0.86</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+      <td>-1.75</td>
+    </tr>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>monthly</td>
+      <td>bajista</td>
+      <td>-33131.0</td>
+      <td>-15.52</td>
+      <td>-3.63</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+      <td>-1.38</td>
+    </tr>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>quarterly</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>-1.00</td>
+    </tr>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>semiannual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>-1.00</td>
+    </tr>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>annual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>-1.00</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>weekly</td>
+      <td>neutral</td>
+      <td>-730.0</td>
+      <td>-0.34</td>
+      <td>-0.86</td>
+      <td>baja</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>monthly</td>
+      <td>alcista</td>
+      <td>23042.0</td>
+      <td>10.79</td>
+      <td>-3.63</td>
+      <td>baja</td>
+      <td>divergencia_neto_sube_precio_baja</td>
+      <td>0.50</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>quarterly</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>semiannual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>annual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>weekly</td>
+      <td>bajista</td>
+      <td>-2005.0</td>
+      <td>-0.94</td>
+      <td>-0.86</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+      <td>-1.00</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>monthly</td>
+      <td>bajista</td>
+      <td>-12505.0</td>
+      <td>-5.86</td>
+      <td>-3.63</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+      <td>-1.00</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>quarterly</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>semiannual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>annual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>weekly</td>
+      <td>neutral</td>
+      <td>0.0</td>
+      <td>0.00</td>
+      <td>-0.86</td>
+      <td>baja</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>monthly</td>
+      <td>neutral</td>
+      <td>-558.0</td>
+      <td>-0.26</td>
+      <td>-3.63</td>
+      <td>baja</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>quarterly</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>semiannual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>annual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+  </tbody>
+</table></div></div>
+  </section>
+
+  <section class="market bias-neutral">
+    <h2>CANADIAN DOLLAR</h2>
+    <p class="sub">CANADIAN DOLLAR - CHICAGO MERCANTILE EXCHANGE</p>
+    <div class="meta">
+      <div><span>Sesgo combinado</span><strong>-9.53</strong>
+        <em>neutral_o_mixto</em></div>
+      <div><span>Calidad evidencia</span><strong>40.0</strong>/100</div>
+      <div><span>LF bias</span><strong>-13.44</strong></div>
+      <div><span>AM bias</span><strong>-1.25</strong></div>
+      <div><span>OR / NR bias</span><strong>-2.19 / -52.81</strong></div>
+      <div><span>C22 Δ LF–AM</span><strong>desacuerdo_cambios</strong></div>
+      <div><span>Precio</span><strong>6C=F</strong>
+        <em>0.7348</em></div>
+      <div><span>Dealer NN% (ctx)</span><strong>33.15</strong></div>
+    </div>
+    <ul class='mwarn'><li>Umbrales PROVISIONALES (config/scoring_rules.json) — no calibrados por mercado.</li><li>Historial corto (8 semanas); percentiles y horizontes largos menos fiables.</li><li>Percentil 156w no disponible o incompleto (historial &lt; umbral configurado).</li><li>C22 niveles: gap NN LF–AM=14.0853 pts (diferencia de nivel, no implica desacuerdo de cambios).</li><li>C22 cambios: LF y AM en desacuerdo en Δ neto semanal.</li></ul>
+    <h3>Desglose por horizonte</h3>
+    <div class="tbl-scroll-wrap"><div class="tbl-scroll-top" aria-hidden="true"><div class="tbl-scroll-top-inner"></div></div><div class="tbl-scroll-main"><table class="dataframe tbl">
+  <thead>
+    <tr style="text-align: right;">
+      <th>grupo</th>
+      <th>horizonte</th>
+      <th>direccion</th>
+      <th>Δ neto</th>
+      <th>Δ neto/OI %</th>
+      <th>precio %</th>
+      <th>precio dir</th>
+      <th>confirmación</th>
+      <th>score (−2…+2)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>weekly</td>
+      <td>alcista</td>
+      <td>3535.0</td>
+      <td>2.33</td>
+      <td>-1.02</td>
+      <td>baja</td>
+      <td>divergencia_neto_sube_precio_baja</td>
+      <td>1.25</td>
+    </tr>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>monthly</td>
+      <td>bajista</td>
+      <td>-7024.0</td>
+      <td>-4.62</td>
+      <td>-2.24</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+      <td>-1.00</td>
+    </tr>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>quarterly</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>semiannual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>annual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>weekly</td>
+      <td>bajista</td>
+      <td>-3762.0</td>
+      <td>-2.48</td>
+      <td>-1.02</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+      <td>-1.75</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>monthly</td>
+      <td>bajista</td>
+      <td>-1639.0</td>
+      <td>-1.08</td>
+      <td>-2.24</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+      <td>-0.62</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>quarterly</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>semiannual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>annual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>weekly</td>
+      <td>bajista</td>
+      <td>-1386.0</td>
+      <td>-0.91</td>
+      <td>-1.02</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+      <td>-1.00</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>monthly</td>
+      <td>bajista</td>
+      <td>-3803.0</td>
+      <td>-2.50</td>
+      <td>-2.24</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+      <td>-1.38</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>quarterly</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>-1.00</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>semiannual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>-1.00</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>annual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>-1.00</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>weekly</td>
+      <td>alcista</td>
+      <td>2101.0</td>
+      <td>1.38</td>
+      <td>-1.02</td>
+      <td>baja</td>
+      <td>divergencia_neto_sube_precio_baja</td>
+      <td>0.50</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>monthly</td>
+      <td>bajista</td>
+      <td>-901.0</td>
+      <td>-0.59</td>
+      <td>-2.24</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+      <td>-0.62</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>quarterly</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>semiannual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>annual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+  </tbody>
+</table></div></div>
+  </section>
+
+  <section class="market bias-neutral">
+    <h2>EURO FX</h2>
+    <p class="sub">EURO FX - CHICAGO MERCANTILE EXCHANGE</p>
+    <div class="meta">
+      <div><span>Sesgo combinado</span><strong>16.64</strong>
+        <em>neutral_o_mixto</em></div>
+      <div><span>Calidad evidencia</span><strong>21.0</strong>/100</div>
+      <div><span>LF bias</span><strong>44.06</strong></div>
+      <div><span>AM bias</span><strong>-4.06</strong></div>
+      <div><span>OR / NR bias</span><strong>-45.0 / 0.0</strong></div>
+      <div><span>C22 Δ LF–AM</span><strong>mixto_un_lado_neutral</strong></div>
+      <div><span>Precio</span><strong>6E=F</strong>
+        <em>1.056</em></div>
+      <div><span>Dealer NN% (ctx)</span><strong>-63.47</strong></div>
+    </div>
+    <ul class='mwarn'><li>Umbrales PROVISIONALES (config/scoring_rules.json) — no calibrados por mercado.</li><li>Historial corto (8 semanas); percentiles y horizontes largos menos fiables.</li><li>Percentil 156w no disponible o incompleto (historial &lt; umbral configurado).</li><li>C22 niveles: gap NN LF–AM=48.7024 pts (diferencia de nivel, no implica desacuerdo de cambios).</li><li>Other Reportables / Nonreportable divergen del sesgo primario (peso complementario).</li><li>Divergencias precio × posicionamiento en uno o más horizontes (no = reversión automática).</li><li>Leveraged Funds: cambio de régimen hace 3 sem. (None); contexto, no entrada automática.</li></ul>
+    <h3>Desglose por horizonte</h3>
+    <div class="tbl-scroll-wrap"><div class="tbl-scroll-top" aria-hidden="true"><div class="tbl-scroll-top-inner"></div></div><div class="tbl-scroll-main"><table class="dataframe tbl">
+  <thead>
+    <tr style="text-align: right;">
+      <th>grupo</th>
+      <th>horizonte</th>
+      <th>direccion</th>
+      <th>Δ neto</th>
+      <th>Δ neto/OI %</th>
+      <th>precio %</th>
+      <th>precio dir</th>
+      <th>confirmación</th>
+      <th>score (−2…+2)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>weekly</td>
+      <td>bajista</td>
+      <td>-4909.0</td>
+      <td>-0.62</td>
+      <td>-1.41</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+      <td>-1.00</td>
+    </tr>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>monthly</td>
+      <td>alcista</td>
+      <td>5851.0</td>
+      <td>0.74</td>
+      <td>-2.94</td>
+      <td>baja</td>
+      <td>divergencia_neto_sube_precio_baja</td>
+      <td>0.12</td>
+    </tr>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>quarterly</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>semiannual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>annual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>weekly</td>
+      <td>neutral</td>
+      <td>1821.0</td>
+      <td>0.23</td>
+      <td>-1.41</td>
+      <td>baja</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>monthly</td>
+      <td>alcista</td>
+      <td>34093.0</td>
+      <td>4.32</td>
+      <td>-2.94</td>
+      <td>baja</td>
+      <td>divergencia_neto_sube_precio_baja</td>
+      <td>0.88</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>quarterly</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>1.00</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>semiannual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>1.00</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>annual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>1.00</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>weekly</td>
+      <td>neutral</td>
+      <td>866.0</td>
+      <td>0.11</td>
+      <td>-1.41</td>
+      <td>baja</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>monthly</td>
+      <td>neutral</td>
+      <td>-3351.0</td>
+      <td>-0.42</td>
+      <td>-2.94</td>
+      <td>baja</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>quarterly</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>semiannual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>annual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>weekly</td>
+      <td>neutral</td>
+      <td>-1608.0</td>
+      <td>-0.20</td>
+      <td>-1.41</td>
+      <td>baja</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>monthly</td>
+      <td>bajista</td>
+      <td>-8921.0</td>
+      <td>-1.13</td>
+      <td>-2.94</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+      <td>-1.00</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>quarterly</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>-1.00</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>semiannual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>-1.00</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>annual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>-1.00</td>
+    </tr>
+  </tbody>
+</table></div></div>
+  </section>
+
+  <section class="market bias-neutral">
+    <h2>EURO FX/BRITISH POUND XRATE</h2>
+    <p class="sub">EURO FX/BRITISH POUND XRATE - CHICAGO MERCANTILE EXCHANGE</p>
+    <div class="meta">
+      <div><span>Sesgo combinado</span><strong>-23.59</strong>
+        <em>neutral_o_mixto</em></div>
+      <div><span>Calidad evidencia</span><strong>50.0</strong>/100</div>
+      <div><span>LF bias</span><strong>-49.06</strong></div>
+      <div><span>AM bias</span><strong>0.0</strong></div>
+      <div><span>OR / NR bias</span><strong>7.19 / -5.0</strong></div>
+      <div><span>C22 Δ LF–AM</span><strong>mixto_un_lado_neutral</strong></div>
+      <div><span>Precio</span><strong>RP=F</strong>
+        <em>0.8839</em></div>
+      <div><span>Dealer NN% (ctx)</span><strong>-31.43</strong></div>
+    </div>
+    <ul class='mwarn'><li>Umbrales PROVISIONALES (config/scoring_rules.json) — no calibrados por mercado.</li><li>Historial corto (8 semanas); percentiles y horizontes largos menos fiables.</li><li>Percentil 156w no disponible o incompleto (historial &lt; umbral configurado).</li><li>C22 niveles: gap NN LF–AM=84.1537 pts (diferencia de nivel, no implica desacuerdo de cambios).</li><li>Other Reportables / Nonreportable divergen del sesgo primario (peso complementario).</li></ul>
+    <h3>Desglose por horizonte</h3>
+    <div class="tbl-scroll-wrap"><div class="tbl-scroll-top" aria-hidden="true"><div class="tbl-scroll-top-inner"></div></div><div class="tbl-scroll-main"><table class="dataframe tbl">
+  <thead>
+    <tr style="text-align: right;">
+      <th>grupo</th>
+      <th>horizonte</th>
+      <th>direccion</th>
+      <th>Δ neto</th>
+      <th>Δ neto/OI %</th>
+      <th>precio %</th>
+      <th>precio dir</th>
+      <th>confirmación</th>
+      <th>score (−2…+2)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>weekly</td>
+      <td>neutral</td>
+      <td>14.0</td>
+      <td>0.04</td>
+      <td>-0.55</td>
+      <td>baja</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>monthly</td>
+      <td>neutral</td>
+      <td>-160.0</td>
+      <td>-0.47</td>
+      <td>0.72</td>
+      <td>sube</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>quarterly</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>semiannual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>annual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>weekly</td>
+      <td>bajista</td>
+      <td>-570.0</td>
+      <td>-1.67</td>
+      <td>-0.55</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+      <td>-1.00</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>monthly</td>
+      <td>bajista</td>
+      <td>-816.0</td>
+      <td>-2.39</td>
+      <td>0.72</td>
+      <td>sube</td>
+      <td>divergencia_neto_baja_precio_sube</td>
+      <td>-0.88</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>quarterly</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>-1.00</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>semiannual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>-1.00</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>annual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>-1.00</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>weekly</td>
+      <td>bajista</td>
+      <td>-391.0</td>
+      <td>-1.15</td>
+      <td>-0.55</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+      <td>-1.00</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>monthly</td>
+      <td>neutral</td>
+      <td>74.0</td>
+      <td>0.22</td>
+      <td>0.72</td>
+      <td>sube</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>quarterly</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>semiannual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>annual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>weekly</td>
+      <td>alcista</td>
+      <td>544.0</td>
+      <td>1.60</td>
+      <td>-0.55</td>
+      <td>baja</td>
+      <td>divergencia_neto_sube_precio_baja</td>
+      <td>0.50</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>monthly</td>
+      <td>alcista</td>
+      <td>407.0</td>
+      <td>1.19</td>
+      <td>0.72</td>
+      <td>sube</td>
+      <td>confirmacion_alcista_potencial</td>
+      <td>0.62</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>quarterly</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>semiannual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>annual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+  </tbody>
+</table></div></div>
+  </section>
+
+  <section class="market bias-neutral">
+    <h2>EURO FX/JAPANESE YEN XRATE</h2>
+    <p class="sub">EURO FX/JAPANESE YEN XRATE - CHICAGO MERCANTILE EXCHANGE</p>
+    <div class="meta">
+      <div><span>Sesgo combinado</span><strong>0.0</strong>
+        <em>neutral_o_mixto</em></div>
+      <div><span>Calidad evidencia</span><strong>25.0</strong>/100</div>
+      <div><span>LF bias</span><strong>0.0</strong></div>
+      <div><span>AM bias</span><strong>0.0</strong></div>
+      <div><span>OR / NR bias</span><strong>0.0 / 0.0</strong></div>
+      <div><span>C22 Δ LF–AM</span><strong>—</strong></div>
+      <div><span>Precio</span><strong>RY=F</strong>
+        <em>140.06</em></div>
+      <div><span>Dealer NN% (ctx)</span><strong>8.16</strong></div>
+    </div>
+    <ul class='mwarn'><li>Umbrales PROVISIONALES (config/scoring_rules.json) — no calibrados por mercado.</li><li>Historial corto (1 semanas); percentiles y horizontes largos menos fiables.</li><li>Percentil 156w no disponible o incompleto (historial &lt; umbral configurado).</li><li>C22 niveles: gap NN LF–AM=56.057 pts (diferencia de nivel, no implica desacuerdo de cambios).</li></ul>
+    <h3>Desglose por horizonte</h3>
+    <div class="tbl-scroll-wrap"><div class="tbl-scroll-top" aria-hidden="true"><div class="tbl-scroll-top-inner"></div></div><div class="tbl-scroll-main"><table class="dataframe tbl">
+  <thead>
+    <tr style="text-align: right;">
+      <th>grupo</th>
+      <th>horizonte</th>
+      <th>direccion</th>
+      <th>Δ neto</th>
+      <th>Δ neto/OI %</th>
+      <th>precio %</th>
+      <th>precio dir</th>
+      <th>confirmación</th>
+      <th>score (−2…+2)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>weekly</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>monthly</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>quarterly</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>semiannual</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>annual</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>weekly</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>monthly</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>quarterly</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>semiannual</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>annual</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>weekly</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>monthly</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>quarterly</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>semiannual</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>annual</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>weekly</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>monthly</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>quarterly</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>semiannual</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>annual</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.0</td>
+    </tr>
+  </tbody>
+</table></div></div>
+  </section>
+
+  <section class="market bias-neutral">
+    <h2>JAPANESE YEN</h2>
+    <p class="sub">JAPANESE YEN - CHICAGO MERCANTILE EXCHANGE</p>
+    <div class="meta">
+      <div><span>Sesgo combinado</span><strong>-4.11</strong>
+        <em>neutral_o_mixto</em></div>
+      <div><span>Calidad evidencia</span><strong>22.0</strong>/100</div>
+      <div><span>LF bias</span><strong>10.0</strong></div>
+      <div><span>AM bias</span><strong>-16.25</strong></div>
+      <div><span>OR / NR bias</span><strong>0.0 / -56.56</strong></div>
+      <div><span>C22 Δ LF–AM</span><strong>desacuerdo_cambios</strong></div>
+      <div><span>Precio</span><strong>6J=F</strong>
+        <em>0.0073</em></div>
+      <div><span>Dealer NN% (ctx)</span><strong>10.4</strong></div>
+    </div>
+    <ul class='mwarn'><li>Umbrales PROVISIONALES (config/scoring_rules.json) — no calibrados por mercado.</li><li>Historial corto (8 semanas); percentiles y horizontes largos menos fiables.</li><li>Percentil 156w no disponible o incompleto (historial &lt; umbral configurado).</li><li>Divergencia LF vs Asset Managers: direcciones opuestas en sesgo de grupo.</li><li>C22 cambios: LF y AM en desacuerdo en Δ neto semanal.</li><li>Asset Manager / Institutional: cambio de régimen hace 5 sem. (None); contexto, no entrada automática.</li></ul>
+    <h3>Desglose por horizonte</h3>
+    <div class="tbl-scroll-wrap"><div class="tbl-scroll-top" aria-hidden="true"><div class="tbl-scroll-top-inner"></div></div><div class="tbl-scroll-main"><table class="dataframe tbl">
+  <thead>
+    <tr style="text-align: right;">
+      <th>grupo</th>
+      <th>horizonte</th>
+      <th>direccion</th>
+      <th>Δ neto</th>
+      <th>Δ neto/OI %</th>
+      <th>precio %</th>
+      <th>precio dir</th>
+      <th>confirmación</th>
+      <th>score (−2…+2)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>weekly</td>
+      <td>bajista</td>
+      <td>-20101.0</td>
+      <td>-10.80</td>
+      <td>-1.77</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+      <td>-1.75</td>
+    </tr>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>monthly</td>
+      <td>bajista</td>
+      <td>-9554.0</td>
+      <td>-5.13</td>
+      <td>-4.78</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+      <td>-1.00</td>
+    </tr>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>quarterly</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>semiannual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>annual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>weekly</td>
+      <td>alcista</td>
+      <td>6573.0</td>
+      <td>3.53</td>
+      <td>-1.77</td>
+      <td>baja</td>
+      <td>divergencia_neto_sube_precio_baja</td>
+      <td>1.25</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>monthly</td>
+      <td>alcista</td>
+      <td>3846.0</td>
+      <td>2.07</td>
+      <td>-4.78</td>
+      <td>baja</td>
+      <td>divergencia_neto_sube_precio_baja</td>
+      <td>0.50</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>quarterly</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>semiannual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>annual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>weekly</td>
+      <td>bajista</td>
+      <td>-4934.0</td>
+      <td>-2.65</td>
+      <td>-1.77</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+      <td>-1.75</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>monthly</td>
+      <td>bajista</td>
+      <td>-17350.0</td>
+      <td>-9.32</td>
+      <td>-4.78</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+      <td>-1.38</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>quarterly</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>-1.00</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>semiannual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>-1.00</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>annual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>-1.00</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>weekly</td>
+      <td>neutral</td>
+      <td>-424.0</td>
+      <td>-0.23</td>
+      <td>-1.77</td>
+      <td>baja</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>monthly</td>
+      <td>neutral</td>
+      <td>-459.0</td>
+      <td>-0.25</td>
+      <td>-4.78</td>
+      <td>baja</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>quarterly</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>semiannual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>annual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+  </tbody>
+</table></div></div>
+  </section>
+
+  <section class="market bias-neutral">
+    <h2>NZ DOLLAR</h2>
+    <p class="sub">NZ DOLLAR - CHICAGO MERCANTILE EXCHANGE</p>
+    <div class="meta">
+      <div><span>Sesgo combinado</span><strong>-7.56</strong>
+        <em>neutral_o_mixto</em></div>
+      <div><span>Calidad evidencia</span><strong>53.0</strong>/100</div>
+      <div><span>LF bias</span><strong>-1.25</strong></div>
+      <div><span>AM bias</span><strong>-16.25</strong></div>
+      <div><span>OR / NR bias</span><strong>3.44 / -16.25</strong></div>
+      <div><span>C22 Δ LF–AM</span><strong>acuerdo_deterioro</strong></div>
+      <div><span>Precio</span><strong>6N=F</strong>
+        <em>0.6165</em></div>
+      <div><span>Dealer NN% (ctx)</span><strong>-4.31</strong></div>
+    </div>
+    <ul class='mwarn'><li>Umbrales PROVISIONALES (config/scoring_rules.json) — no calibrados por mercado.</li><li>Historial corto (8 semanas); percentiles y horizontes largos menos fiables.</li><li>Percentil 156w no disponible o incompleto (historial &lt; umbral configurado).</li><li>C22 niveles: gap NN LF–AM=11.2788 pts (diferencia de nivel, no implica desacuerdo de cambios).</li><li>Asset Manager / Institutional: cambio de régimen hace 0 sem. (cruzo_a_neto_negativo); contexto, no entrada automática.</li><li>Leveraged Funds: cambio de régimen hace 3 sem. (None); contexto, no entrada automática.</li></ul>
+    <h3>Desglose por horizonte</h3>
+    <div class="tbl-scroll-wrap"><div class="tbl-scroll-top" aria-hidden="true"><div class="tbl-scroll-top-inner"></div></div><div class="tbl-scroll-main"><table class="dataframe tbl">
+  <thead>
+    <tr style="text-align: right;">
+      <th>grupo</th>
+      <th>horizonte</th>
+      <th>direccion</th>
+      <th>Δ neto</th>
+      <th>Δ neto/OI %</th>
+      <th>precio %</th>
+      <th>precio dir</th>
+      <th>confirmación</th>
+      <th>score (−2…+2)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>weekly</td>
+      <td>bajista</td>
+      <td>-1411.0</td>
+      <td>-4.72</td>
+      <td>-1.33</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+      <td>-1.75</td>
+    </tr>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>monthly</td>
+      <td>bajista</td>
+      <td>-682.0</td>
+      <td>-2.28</td>
+      <td>-5.05</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+      <td>-1.00</td>
+    </tr>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>quarterly</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>semiannual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>annual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>weekly</td>
+      <td>bajista</td>
+      <td>-187.0</td>
+      <td>-0.63</td>
+      <td>-1.33</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+      <td>-1.00</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>monthly</td>
+      <td>alcista</td>
+      <td>4904.0</td>
+      <td>16.41</td>
+      <td>-5.05</td>
+      <td>baja</td>
+      <td>divergencia_neto_sube_precio_baja</td>
+      <td>0.50</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>quarterly</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>semiannual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>annual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>weekly</td>
+      <td>bajista</td>
+      <td>-1027.0</td>
+      <td>-3.44</td>
+      <td>-1.33</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+      <td>-1.75</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>monthly</td>
+      <td>bajista</td>
+      <td>-1831.0</td>
+      <td>-6.13</td>
+      <td>-5.05</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+      <td>-1.00</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>quarterly</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>semiannual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>annual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>weekly</td>
+      <td>alcista</td>
+      <td>535.0</td>
+      <td>1.79</td>
+      <td>-1.33</td>
+      <td>baja</td>
+      <td>divergencia_neto_sube_precio_baja</td>
+      <td>0.50</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>monthly</td>
+      <td>alcista</td>
+      <td>461.0</td>
+      <td>1.54</td>
+      <td>-5.05</td>
+      <td>baja</td>
+      <td>divergencia_neto_sube_precio_baja</td>
+      <td>0.12</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>quarterly</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>semiannual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>annual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+  </tbody>
+</table></div></div>
+  </section>
+
+  <section class="market bias-neutral">
+    <h2>SWISS FRANC</h2>
+    <p class="sub">SWISS FRANC - CHICAGO MERCANTILE EXCHANGE</p>
+    <div class="meta">
+      <div><span>Sesgo combinado</span><strong>-4.79</strong>
+        <em>neutral_o_mixto</em></div>
+      <div><span>Calidad evidencia</span><strong>22.0</strong>/100</div>
+      <div><span>LF bias</span><strong>10.0</strong></div>
+      <div><span>AM bias</span><strong>-16.25</strong></div>
+      <div><span>OR / NR bias</span><strong>-9.69 / -56.56</strong></div>
+      <div><span>C22 Δ LF–AM</span><strong>desacuerdo_cambios</strong></div>
+      <div><span>Precio</span><strong>6S=F</strong>
+        <em>1.0648</em></div>
+      <div><span>Dealer NN% (ctx)</span><strong>32.97</strong></div>
+    </div>
+    <ul class='mwarn'><li>Umbrales PROVISIONALES (config/scoring_rules.json) — no calibrados por mercado.</li><li>Historial corto (8 semanas); percentiles y horizontes largos menos fiables.</li><li>Percentil 156w no disponible o incompleto (historial &lt; umbral configurado).</li><li>Divergencia LF vs Asset Managers: direcciones opuestas en sesgo de grupo.</li><li>C22 niveles: gap NN LF–AM=9.9522 pts (diferencia de nivel, no implica desacuerdo de cambios).</li><li>C22 cambios: LF y AM en desacuerdo en Δ neto semanal.</li></ul>
+    <h3>Desglose por horizonte</h3>
+    <div class="tbl-scroll-wrap"><div class="tbl-scroll-top" aria-hidden="true"><div class="tbl-scroll-top-inner"></div></div><div class="tbl-scroll-main"><table class="dataframe tbl">
+  <thead>
+    <tr style="text-align: right;">
+      <th>grupo</th>
+      <th>horizonte</th>
+      <th>direccion</th>
+      <th>Δ neto</th>
+      <th>Δ neto/OI %</th>
+      <th>precio %</th>
+      <th>precio dir</th>
+      <th>confirmación</th>
+      <th>score (−2…+2)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>weekly</td>
+      <td>bajista</td>
+      <td>-1123.0</td>
+      <td>-2.87</td>
+      <td>-1.76</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+      <td>-1.75</td>
+    </tr>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>monthly</td>
+      <td>bajista</td>
+      <td>-1981.0</td>
+      <td>-5.07</td>
+      <td>-2.35</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+      <td>-1.00</td>
+    </tr>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>quarterly</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>semiannual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>annual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>weekly</td>
+      <td>alcista</td>
+      <td>2229.0</td>
+      <td>5.70</td>
+      <td>-1.76</td>
+      <td>baja</td>
+      <td>divergencia_neto_sube_precio_baja</td>
+      <td>1.25</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>monthly</td>
+      <td>alcista</td>
+      <td>4709.0</td>
+      <td>12.05</td>
+      <td>-2.35</td>
+      <td>baja</td>
+      <td>divergencia_neto_sube_precio_baja</td>
+      <td>0.50</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>quarterly</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>semiannual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>annual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>weekly</td>
+      <td>bajista</td>
+      <td>-924.0</td>
+      <td>-2.36</td>
+      <td>-1.76</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+      <td>-1.75</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>monthly</td>
+      <td>bajista</td>
+      <td>-3481.0</td>
+      <td>-8.91</td>
+      <td>-2.35</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+      <td>-1.38</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>quarterly</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>-1.00</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>semiannual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>-1.00</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>annual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>-1.00</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>weekly</td>
+      <td>bajista</td>
+      <td>-639.0</td>
+      <td>-1.63</td>
+      <td>-1.76</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+      <td>-1.00</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>monthly</td>
+      <td>bajista</td>
+      <td>-639.0</td>
+      <td>-1.63</td>
+      <td>-2.35</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+      <td>-0.62</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>quarterly</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>semiannual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>annual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+  </tbody>
+</table></div></div>
+  </section>
+
+  <section class="market bias-neutral">
+    <h2>USD INDEX</h2>
+    <p class="sub">USD INDEX - ICE FUTURES U.S.</p>
+    <div class="meta">
+      <div><span>Sesgo combinado</span><strong>0.72</strong>
+        <em>neutral_o_mixto</em></div>
+      <div><span>Calidad evidencia</span><strong>0.0</strong>/100</div>
+      <div><span>LF bias</span><strong>-7.19</strong></div>
+      <div><span>AM bias</span><strong>7.81</strong></div>
+      <div><span>OR / NR bias</span><strong>7.81 / 12.5</strong></div>
+      <div><span>C22 Δ LF–AM</span><strong>desacuerdo_cambios</strong></div>
+      <div><span>Precio</span><strong>DX-Y.NYB</strong>
+        <em>105.21</em></div>
+      <div><span>Dealer NN% (ctx)</span><strong>-35.2</strong></div>
+    </div>
+    <ul class='mwarn'><li>Umbrales PROVISIONALES (config/scoring_rules.json) — no calibrados por mercado.</li><li>Historial corto (8 semanas); percentiles y horizontes largos menos fiables.</li><li>Percentil 156w no disponible o incompleto (historial &lt; umbral configurado).</li><li>Divergencia LF vs Asset Managers: direcciones opuestas en sesgo de grupo.</li><li>C22 niveles: gap NN LF–AM=53.248 pts (diferencia de nivel, no implica desacuerdo de cambios).</li><li>C22 cambios: LF y AM en desacuerdo en Δ neto semanal.</li><li>Divergencias precio × posicionamiento en uno o más horizontes (no = reversión automática).</li></ul>
+    <h3>Desglose por horizonte</h3>
+    <div class="tbl-scroll-wrap"><div class="tbl-scroll-top" aria-hidden="true"><div class="tbl-scroll-top-inner"></div></div><div class="tbl-scroll-main"><table class="dataframe tbl">
+  <thead>
+    <tr style="text-align: right;">
+      <th>grupo</th>
+      <th>horizonte</th>
+      <th>direccion</th>
+      <th>Δ neto</th>
+      <th>Δ neto/OI %</th>
+      <th>precio %</th>
+      <th>precio dir</th>
+      <th>confirmación</th>
+      <th>score (−2…+2)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>weekly</td>
+      <td>alcista</td>
+      <td>2065.0</td>
+      <td>5.73</td>
+      <td>1.30</td>
+      <td>sube</td>
+      <td>confirmacion_alcista_potencial</td>
+      <td>1.75</td>
+    </tr>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>monthly</td>
+      <td>bajista</td>
+      <td>-595.0</td>
+      <td>-1.65</td>
+      <td>3.22</td>
+      <td>sube</td>
+      <td>divergencia_neto_baja_precio_sube</td>
+      <td>-0.12</td>
+    </tr>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>quarterly</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>semiannual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>annual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>weekly</td>
+      <td>bajista</td>
+      <td>-2861.0</td>
+      <td>-7.94</td>
+      <td>1.30</td>
+      <td>sube</td>
+      <td>divergencia_neto_baja_precio_sube</td>
+      <td>-1.25</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>monthly</td>
+      <td>bajista</td>
+      <td>-565.0</td>
+      <td>-1.57</td>
+      <td>3.22</td>
+      <td>sube</td>
+      <td>divergencia_neto_baja_precio_sube</td>
+      <td>-0.12</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>quarterly</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>semiannual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>annual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>weekly</td>
+      <td>alcista</td>
+      <td>275.0</td>
+      <td>0.76</td>
+      <td>1.30</td>
+      <td>sube</td>
+      <td>confirmacion_alcista_potencial</td>
+      <td>1.00</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>monthly</td>
+      <td>alcista</td>
+      <td>1696.0</td>
+      <td>4.71</td>
+      <td>3.22</td>
+      <td>sube</td>
+      <td>confirmacion_alcista_potencial</td>
+      <td>1.00</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>quarterly</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>semiannual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>annual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>weekly</td>
+      <td>alcista</td>
+      <td>751.0</td>
+      <td>2.08</td>
+      <td>1.30</td>
+      <td>sube</td>
+      <td>confirmacion_alcista_potencial</td>
+      <td>1.75</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>monthly</td>
+      <td>bajista</td>
+      <td>-496.0</td>
+      <td>-1.38</td>
+      <td>3.22</td>
+      <td>sube</td>
+      <td>divergencia_neto_baja_precio_sube</td>
+      <td>-0.12</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>quarterly</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>semiannual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>annual</td>
+      <td>None</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>None</td>
+      <td>None</td>
+      <td>0.00</td>
+    </tr>
+  </tbody>
+</table></div></div>
+  </section>
+
+  <section class="market">
+    <h2>Resumen indicadores — Leveraged Funds &amp; Asset Managers</h2>
+    <p class="sub">Mercados: AUSTRALIAN DOLLAR, BRAZILIAN REAL, BRITISH POUND, CANADIAN DOLLAR, EURO FX, EURO FX/BRITISH POUND XRATE, EURO FX/JAPANESE YEN XRATE, JAPANESE YEN, NZ DOLLAR, SWISS FRANC, USD INDEX</p>
+    <div class="tbl-scroll-wrap"><div class="tbl-scroll-top" aria-hidden="true"><div class="tbl-scroll-top-inner"></div></div><div class="tbl-scroll-main"><table class="dataframe tbl">
+  <thead>
+    <tr style="text-align: right;">
+      <th>market</th>
+      <th>report_date</th>
+      <th>trader_group</th>
+      <th>net_position</th>
+      <th>normalized_net_pct</th>
+      <th>delta_net_weekly</th>
+      <th>delta_net_label</th>
+      <th>accum_liq_pattern</th>
+      <th>open_interest_total</th>
+      <th>oi_change_pct</th>
+      <th>oi_change_label</th>
+      <th>pct_oi_long_calc</th>
+      <th>pct_oi_short_calc</th>
+      <th>net_percentile_52w</th>
+      <th>normalized_net_percentile_52w</th>
+      <th>net_percentile_156w</th>
+      <th>normalized_net_percentile_156w</th>
+      <th>consecutive_net_up</th>
+      <th>consecutive_net_down</th>
+      <th>net_change_accel_label</th>
+      <th>spreading_positions</th>
+      <th>spread_change_label</th>
+      <th>weeks_since_regime_cross</th>
+      <th>regime_direction</th>
+      <th>price_close</th>
+      <th>price_direction_monthly</th>
+      <th>price_position_confirm_monthly</th>
+      <th>net_change_weekly</th>
+      <th>direction_weekly</th>
+      <th>net_change_monthly</th>
+      <th>direction_monthly</th>
+      <th>net_change_quarterly</th>
+      <th>direction_quarterly</th>
+      <th>net_change_semiannual</th>
+      <th>direction_semiannual</th>
+      <th>net_change_annual</th>
+      <th>direction_annual</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>AUSTRALIAN DOLLAR</td>
+      <td>2023-02-21</td>
+      <td>Asset Manager / Institutional</td>
+      <td>-11877</td>
+      <td>-9.62</td>
+      <td>-7206.0</td>
+      <td>deterioro_bajista</td>
+      <td>se_reducen_ambas</td>
+      <td>123456</td>
+      <td>-2.04</td>
+      <td>disminuye</td>
+      <td>40.05</td>
+      <td>49.67</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>0</td>
+      <td>3</td>
+      <td>estable</td>
+      <td>1194</td>
+      <td>spread_disminuye</td>
+      <td>2.0</td>
+      <td>None</td>
+      <td>0.67</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+      <td>-7206.0</td>
+      <td>bajista</td>
+      <td>-6097.0</td>
+      <td>bajista</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <td>AUSTRALIAN DOLLAR</td>
+      <td>2023-02-21</td>
+      <td>Leveraged Funds</td>
+      <td>1233</td>
+      <td>1.00</td>
+      <td>11614.0</td>
+      <td>mejora_alcista</td>
+      <td>nuevos_long_y_cierre_short</td>
+      <td>123456</td>
+      <td>-2.04</td>
+      <td>disminuye</td>
+      <td>19.53</td>
+      <td>18.53</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>3</td>
+      <td>0</td>
+      <td>acelerando</td>
+      <td>3270</td>
+      <td>spread_disminuye</td>
+      <td>0.0</td>
+      <td>cruzo_a_neto_positivo</td>
+      <td>0.67</td>
+      <td>baja</td>
+      <td>divergencia_neto_sube_precio_baja</td>
+      <td>11614.0</td>
+      <td>alcista</td>
+      <td>15408.0</td>
+      <td>alcista</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <td>BRAZILIAN REAL</td>
+      <td>2023-02-21</td>
+      <td>Asset Manager / Institutional</td>
+      <td>28863</td>
+      <td>61.09</td>
+      <td>-1314.0</td>
+      <td>deterioro_bajista</td>
+      <td>mixta_o_unilateral</td>
+      <td>47247</td>
+      <td>-0.41</td>
+      <td>disminuye</td>
+      <td>63.75</td>
+      <td>2.66</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>0</td>
+      <td>2</td>
+      <td>desacelerando</td>
+      <td>0</td>
+      <td>spread_sin_cambio</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>0.19</td>
+      <td>baja</td>
+      <td>divergencia_neto_sube_precio_baja</td>
+      <td>-1314.0</td>
+      <td>bajista</td>
+      <td>6618.0</td>
+      <td>alcista</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <td>BRAZILIAN REAL</td>
+      <td>2023-02-21</td>
+      <td>Leveraged Funds</td>
+      <td>4853</td>
+      <td>10.27</td>
+      <td>1055.0</td>
+      <td>mejora_alcista</td>
+      <td>se_reducen_ambas</td>
+      <td>47247</td>
+      <td>-0.41</td>
+      <td>disminuye</td>
+      <td>23.42</td>
+      <td>13.15</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>3</td>
+      <td>0</td>
+      <td>desacelerando</td>
+      <td>750</td>
+      <td>spread_aumenta</td>
+      <td>2.0</td>
+      <td>None</td>
+      <td>0.19</td>
+      <td>baja</td>
+      <td>divergencia_neto_sube_precio_baja</td>
+      <td>1055.0</td>
+      <td>alcista</td>
+      <td>6642.0</td>
+      <td>alcista</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <td>BRITISH POUND</td>
+      <td>2023-02-21</td>
+      <td>Asset Manager / Institutional</td>
+      <td>-54865</td>
+      <td>-25.70</td>
+      <td>-5522.0</td>
+      <td>deterioro_bajista</td>
+      <td>menos_long_y_mas_short</td>
+      <td>213502</td>
+      <td>3.99</td>
+      <td>aumenta</td>
+      <td>14.07</td>
+      <td>39.77</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>0</td>
+      <td>4</td>
+      <td>estable</td>
+      <td>4701</td>
+      <td>spread_disminuye</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>1.19</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+      <td>-5522.0</td>
+      <td>bajista</td>
+      <td>-33131.0</td>
+      <td>bajista</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <td>BRITISH POUND</td>
+      <td>2023-02-21</td>
+      <td>Leveraged Funds</td>
+      <td>28225</td>
+      <td>13.22</td>
+      <td>-730.0</td>
+      <td>deterioro_bajista</td>
+      <td>aumentan_ambas</td>
+      <td>213502</td>
+      <td>3.99</td>
+      <td>aumenta</td>
+      <td>34.14</td>
+      <td>20.92</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>0</td>
+      <td>1</td>
+      <td>desacelerando</td>
+      <td>9093</td>
+      <td>spread_aumenta</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>1.19</td>
+      <td>baja</td>
+      <td>divergencia_neto_sube_precio_baja</td>
+      <td>-730.0</td>
+      <td>neutral</td>
+      <td>23042.0</td>
+      <td>alcista</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <td>CANADIAN DOLLAR</td>
+      <td>2023-02-21</td>
+      <td>Asset Manager / Institutional</td>
+      <td>-40129</td>
+      <td>-26.42</td>
+      <td>3535.0</td>
+      <td>mejora_alcista</td>
+      <td>se_reducen_ambas</td>
+      <td>151896</td>
+      <td>1.90</td>
+      <td>aumenta</td>
+      <td>14.62</td>
+      <td>41.03</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>1</td>
+      <td>0</td>
+      <td>estable</td>
+      <td>5917</td>
+      <td>spread_aumenta</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>0.73</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+      <td>3535.0</td>
+      <td>alcista</td>
+      <td>-7024.0</td>
+      <td>bajista</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <td>CANADIAN DOLLAR</td>
+      <td>2023-02-21</td>
+      <td>Leveraged Funds</td>
+      <td>-18734</td>
+      <td>-12.33</td>
+      <td>-3762.0</td>
+      <td>deterioro_bajista</td>
+      <td>menos_long_y_mas_short</td>
+      <td>151896</td>
+      <td>1.90</td>
+      <td>aumenta</td>
+      <td>9.66</td>
+      <td>22.00</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>0</td>
+      <td>2</td>
+      <td>estable</td>
+      <td>6346</td>
+      <td>spread_aumenta</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>0.73</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+      <td>-3762.0</td>
+      <td>bajista</td>
+      <td>-1639.0</td>
+      <td>bajista</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <td>EURO FX</td>
+      <td>2023-02-21</td>
+      <td>Asset Manager / Institutional</td>
+      <td>407928</td>
+      <td>51.64</td>
+      <td>-4909.0</td>
+      <td>deterioro_bajista</td>
+      <td>menos_long_y_mas_short</td>
+      <td>789898</td>
+      <td>0.16</td>
+      <td>aumenta</td>
+      <td>61.39</td>
+      <td>9.75</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>0</td>
+      <td>1</td>
+      <td>desacelerando</td>
+      <td>21213</td>
+      <td>spread_aumenta</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>1.06</td>
+      <td>baja</td>
+      <td>divergencia_neto_sube_precio_baja</td>
+      <td>-4909.0</td>
+      <td>bajista</td>
+      <td>5851.0</td>
+      <td>alcista</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <td>EURO FX</td>
+      <td>2023-02-21</td>
+      <td>Leveraged Funds</td>
+      <td>23229</td>
+      <td>2.94</td>
+      <td>1821.0</td>
+      <td>mejora_alcista</td>
+      <td>nuevos_long_y_cierre_short</td>
+      <td>789898</td>
+      <td>0.16</td>
+      <td>aumenta</td>
+      <td>10.04</td>
+      <td>7.10</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>5</td>
+      <td>0</td>
+      <td>desacelerando</td>
+      <td>18535</td>
+      <td>spread_aumenta</td>
+      <td>3.0</td>
+      <td>None</td>
+      <td>1.06</td>
+      <td>baja</td>
+      <td>divergencia_neto_sube_precio_baja</td>
+      <td>1821.0</td>
+      <td>neutral</td>
+      <td>34093.0</td>
+      <td>alcista</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <td>EURO FX/BRITISH POUND XRATE</td>
+      <td>2023-02-21</td>
+      <td>Asset Manager / Institutional</td>
+      <td>14157</td>
+      <td>41.55</td>
+      <td>14.0</td>
+      <td>mejora_alcista</td>
+      <td>aumentan_ambas</td>
+      <td>34071</td>
+      <td>3.87</td>
+      <td>aumenta</td>
+      <td>45.15</td>
+      <td>3.60</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>2</td>
+      <td>0</td>
+      <td>desacelerando</td>
+      <td>3525</td>
+      <td>spread_aumenta</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>0.88</td>
+      <td>sube</td>
+      <td>None</td>
+      <td>14.0</td>
+      <td>neutral</td>
+      <td>-160.0</td>
+      <td>neutral</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <td>EURO FX/BRITISH POUND XRATE</td>
+      <td>2023-02-21</td>
+      <td>Leveraged Funds</td>
+      <td>-14515</td>
+      <td>-42.60</td>
+      <td>-570.0</td>
+      <td>deterioro_bajista</td>
+      <td>aumentan_ambas</td>
+      <td>34071</td>
+      <td>3.87</td>
+      <td>aumenta</td>
+      <td>2.55</td>
+      <td>45.16</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>0</td>
+      <td>3</td>
+      <td>acelerando</td>
+      <td>25</td>
+      <td>spread_aumenta</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>0.88</td>
+      <td>sube</td>
+      <td>divergencia_neto_baja_precio_sube</td>
+      <td>-570.0</td>
+      <td>bajista</td>
+      <td>-816.0</td>
+      <td>bajista</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <td>EURO FX/JAPANESE YEN XRATE</td>
+      <td>2023-02-07</td>
+      <td>Asset Manager / Institutional</td>
+      <td>-7801</td>
+      <td>-36.22</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>None</td>
+      <td>21537</td>
+      <td>—</td>
+      <td>None</td>
+      <td>16.32</td>
+      <td>52.54</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>0</td>
+      <td>0</td>
+      <td>None</td>
+      <td>1158</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>140.06</td>
+      <td>None</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <td>EURO FX/JAPANESE YEN XRATE</td>
+      <td>2023-02-07</td>
+      <td>Leveraged Funds</td>
+      <td>4272</td>
+      <td>19.84</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>None</td>
+      <td>21537</td>
+      <td>—</td>
+      <td>None</td>
+      <td>19.84</td>
+      <td>0.00</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>0</td>
+      <td>0</td>
+      <td>None</td>
+      <td>0</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>140.06</td>
+      <td>None</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <td>JAPANESE YEN</td>
+      <td>2023-02-21</td>
+      <td>Asset Manager / Institutional</td>
+      <td>1088</td>
+      <td>0.58</td>
+      <td>-20101.0</td>
+      <td>deterioro_bajista</td>
+      <td>menos_long_y_mas_short</td>
+      <td>186100</td>
+      <td>6.37</td>
+      <td>aumenta</td>
+      <td>38.32</td>
+      <td>37.74</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>0</td>
+      <td>1</td>
+      <td>acelerando</td>
+      <td>3963</td>
+      <td>spread_aumenta</td>
+      <td>5.0</td>
+      <td>None</td>
+      <td>0.01</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+      <td>-20101.0</td>
+      <td>bajista</td>
+      <td>-9554.0</td>
+      <td>bajista</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <td>JAPANESE YEN</td>
+      <td>2023-02-21</td>
+      <td>Leveraged Funds</td>
+      <td>-7088</td>
+      <td>-3.81</td>
+      <td>6573.0</td>
+      <td>mejora_alcista</td>
+      <td>aumentan_ambas</td>
+      <td>186100</td>
+      <td>6.37</td>
+      <td>aumenta</td>
+      <td>16.55</td>
+      <td>20.36</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>2</td>
+      <td>0</td>
+      <td>acelerando</td>
+      <td>4526</td>
+      <td>spread_aumenta</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>0.01</td>
+      <td>baja</td>
+      <td>divergencia_neto_sube_precio_baja</td>
+      <td>6573.0</td>
+      <td>alcista</td>
+      <td>3846.0</td>
+      <td>alcista</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <td>NZ DOLLAR</td>
+      <td>2023-02-21</td>
+      <td>Asset Manager / Institutional</td>
+      <td>-1296</td>
+      <td>-4.34</td>
+      <td>-1411.0</td>
+      <td>deterioro_bajista</td>
+      <td>menos_long_y_mas_short</td>
+      <td>29888</td>
+      <td>-0.04</td>
+      <td>estable</td>
+      <td>24.69</td>
+      <td>29.03</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>0</td>
+      <td>2</td>
+      <td>desacelerando</td>
+      <td>239</td>
+      <td>spread_disminuye</td>
+      <td>0.0</td>
+      <td>cruzo_a_neto_negativo</td>
+      <td>0.62</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+      <td>-1411.0</td>
+      <td>bajista</td>
+      <td>-682.0</td>
+      <td>bajista</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <td>NZ DOLLAR</td>
+      <td>2023-02-21</td>
+      <td>Leveraged Funds</td>
+      <td>2075</td>
+      <td>6.94</td>
+      <td>-187.0</td>
+      <td>deterioro_bajista</td>
+      <td>aumentan_ambas</td>
+      <td>29888</td>
+      <td>-0.04</td>
+      <td>estable</td>
+      <td>38.98</td>
+      <td>32.04</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>0</td>
+      <td>2</td>
+      <td>desacelerando</td>
+      <td>1160</td>
+      <td>spread_aumenta</td>
+      <td>3.0</td>
+      <td>None</td>
+      <td>0.62</td>
+      <td>baja</td>
+      <td>divergencia_neto_sube_precio_baja</td>
+      <td>-187.0</td>
+      <td>bajista</td>
+      <td>4904.0</td>
+      <td>alcista</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <td>SWISS FRANC</td>
+      <td>2023-02-21</td>
+      <td>Asset Manager / Institutional</td>
+      <td>-6391</td>
+      <td>-16.35</td>
+      <td>-1123.0</td>
+      <td>deterioro_bajista</td>
+      <td>menos_long_y_mas_short</td>
+      <td>39087</td>
+      <td>3.98</td>
+      <td>aumenta</td>
+      <td>9.52</td>
+      <td>25.88</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>0</td>
+      <td>1</td>
+      <td>estable</td>
+      <td>475</td>
+      <td>spread_disminuye</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>1.06</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+      <td>-1123.0</td>
+      <td>bajista</td>
+      <td>-1981.0</td>
+      <td>bajista</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <td>SWISS FRANC</td>
+      <td>2023-02-21</td>
+      <td>Leveraged Funds</td>
+      <td>-2501</td>
+      <td>-6.40</td>
+      <td>2229.0</td>
+      <td>mejora_alcista</td>
+      <td>aumentan_ambas</td>
+      <td>39087</td>
+      <td>3.98</td>
+      <td>aumenta</td>
+      <td>23.80</td>
+      <td>30.19</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>1</td>
+      <td>0</td>
+      <td>acelerando</td>
+      <td>37</td>
+      <td>spread_disminuye</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>1.06</td>
+      <td>baja</td>
+      <td>divergencia_neto_sube_precio_baja</td>
+      <td>2229.0</td>
+      <td>alcista</td>
+      <td>4709.0</td>
+      <td>alcista</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <td>USD INDEX</td>
+      <td>2023-02-21</td>
+      <td>Asset Manager / Institutional</td>
+      <td>11933</td>
+      <td>33.13</td>
+      <td>2065.0</td>
+      <td>mejora_alcista</td>
+      <td>nuevos_long_y_cierre_short</td>
+      <td>36022</td>
+      <td>9.27</td>
+      <td>aumenta</td>
+      <td>39.44</td>
+      <td>6.31</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>1</td>
+      <td>0</td>
+      <td>acelerando</td>
+      <td>1008</td>
+      <td>spread_aumenta</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>105.21</td>
+      <td>sube</td>
+      <td>divergencia_neto_baja_precio_sube</td>
+      <td>2065.0</td>
+      <td>alcista</td>
+      <td>-595.0</td>
+      <td>bajista</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <td>USD INDEX</td>
+      <td>2023-02-21</td>
+      <td>Leveraged Funds</td>
+      <td>-7248</td>
+      <td>-20.12</td>
+      <td>-2861.0</td>
+      <td>deterioro_bajista</td>
+      <td>aumentan_ambas</td>
+      <td>36022</td>
+      <td>9.27</td>
+      <td>aumenta</td>
+      <td>22.87</td>
+      <td>42.99</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>—</td>
+      <td>0</td>
+      <td>2</td>
+      <td>acelerando</td>
+      <td>860</td>
+      <td>spread_aumenta</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>105.21</td>
+      <td>sube</td>
+      <td>divergencia_neto_baja_precio_sube</td>
+      <td>-2861.0</td>
+      <td>bajista</td>
+      <td>-565.0</td>
+      <td>bajista</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+    </tr>
+  </tbody>
+</table></div></div>
+  </section>
+  <section class="market"><h2>AUSTRALIAN DOLLAR — indicadores</h2><p class="sub">AUSTRALIAN DOLLAR - CHICAGO MERCANTILE EXCHANGE</p><div class="tbl-scroll-wrap"><div class="tbl-scroll-top" aria-hidden="true"><div class="tbl-scroll-top-inner"></div></div><div class="tbl-scroll-main"><table class="dataframe tbl">
+  <thead>
+    <tr style="text-align: right;">
+      <th>trader_group</th>
+      <th>net_position</th>
+      <th>normalized_net_pct</th>
+      <th>delta_net_weekly</th>
+      <th>delta_net_label</th>
+      <th>accum_liq_pattern</th>
+      <th>open_interest_total</th>
+      <th>oi_change_pct</th>
+      <th>pct_oi_long_calc</th>
+      <th>pct_oi_short_calc</th>
+      <th>net_percentile_52w</th>
+      <th>net_percentile_156w</th>
+      <th>consecutive_net_up</th>
+      <th>consecutive_net_down</th>
+      <th>net_change_accel_label</th>
+      <th>spreading_positions</th>
+      <th>spread_change_label</th>
+      <th>weeks_since_regime_cross</th>
+      <th>regime_direction</th>
+      <th>price_close</th>
+      <th>price_direction_monthly</th>
+      <th>price_position_confirm_monthly</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>-11877</td>
+      <td>-9.62</td>
+      <td>-7206.0</td>
+      <td>deterioro_bajista</td>
+      <td>se_reducen_ambas</td>
+      <td>123456</td>
+      <td>-2.04</td>
+      <td>40.05</td>
+      <td>49.67</td>
+      <td>—</td>
+      <td>—</td>
+      <td>0</td>
+      <td>3</td>
+      <td>estable</td>
+      <td>1194</td>
+      <td>spread_disminuye</td>
+      <td>2.0</td>
+      <td>None</td>
+      <td>0.67</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+    </tr>
+    <tr>
+      <td>Dealer / Intermediary</td>
+      <td>8201</td>
+      <td>6.64</td>
+      <td>1025.0</td>
+      <td>mejora_alcista</td>
+      <td>se_reducen_ambas</td>
+      <td>123456</td>
+      <td>-2.04</td>
+      <td>16.72</td>
+      <td>10.08</td>
+      <td>—</td>
+      <td>—</td>
+      <td>2</td>
+      <td>0</td>
+      <td>desacelerando</td>
+      <td>98</td>
+      <td>spread_aumenta</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>0.67</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>1233</td>
+      <td>1.00</td>
+      <td>11614.0</td>
+      <td>mejora_alcista</td>
+      <td>nuevos_long_y_cierre_short</td>
+      <td>123456</td>
+      <td>-2.04</td>
+      <td>19.53</td>
+      <td>18.53</td>
+      <td>—</td>
+      <td>—</td>
+      <td>3</td>
+      <td>0</td>
+      <td>acelerando</td>
+      <td>3270</td>
+      <td>spread_disminuye</td>
+      <td>0.0</td>
+      <td>cruzo_a_neto_positivo</td>
+      <td>0.67</td>
+      <td>baja</td>
+      <td>divergencia_neto_sube_precio_baja</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>-261</td>
+      <td>-0.21</td>
+      <td>-5433.0</td>
+      <td>deterioro_bajista</td>
+      <td>menos_long_y_mas_short</td>
+      <td>123456</td>
+      <td>-2.04</td>
+      <td>17.82</td>
+      <td>18.03</td>
+      <td>—</td>
+      <td>—</td>
+      <td>0</td>
+      <td>3</td>
+      <td>acelerando</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>0.0</td>
+      <td>cruzo_a_neto_negativo</td>
+      <td>0.67</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>2704</td>
+      <td>2.19</td>
+      <td>0.0</td>
+      <td>sin_cambio_neto</td>
+      <td>sin_cambio</td>
+      <td>123456</td>
+      <td>-2.04</td>
+      <td>2.19</td>
+      <td>0.00</td>
+      <td>—</td>
+      <td>—</td>
+      <td>0</td>
+      <td>0</td>
+      <td>desacelerando</td>
+      <td>0</td>
+      <td>spread_sin_cambio</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>0.67</td>
+      <td>baja</td>
+      <td>None</td>
+    </tr>
+  </tbody>
+</table></div></div></section><section class="market"><h2>BRAZILIAN REAL — indicadores</h2><p class="sub">BRAZILIAN REAL - CHICAGO MERCANTILE EXCHANGE</p><div class="tbl-scroll-wrap"><div class="tbl-scroll-top" aria-hidden="true"><div class="tbl-scroll-top-inner"></div></div><div class="tbl-scroll-main"><table class="dataframe tbl">
+  <thead>
+    <tr style="text-align: right;">
+      <th>trader_group</th>
+      <th>net_position</th>
+      <th>normalized_net_pct</th>
+      <th>delta_net_weekly</th>
+      <th>delta_net_label</th>
+      <th>accum_liq_pattern</th>
+      <th>open_interest_total</th>
+      <th>oi_change_pct</th>
+      <th>pct_oi_long_calc</th>
+      <th>pct_oi_short_calc</th>
+      <th>net_percentile_52w</th>
+      <th>net_percentile_156w</th>
+      <th>consecutive_net_up</th>
+      <th>consecutive_net_down</th>
+      <th>net_change_accel_label</th>
+      <th>spreading_positions</th>
+      <th>spread_change_label</th>
+      <th>weeks_since_regime_cross</th>
+      <th>regime_direction</th>
+      <th>price_close</th>
+      <th>price_direction_monthly</th>
+      <th>price_position_confirm_monthly</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>28863</td>
+      <td>61.09</td>
+      <td>-1314.0</td>
+      <td>deterioro_bajista</td>
+      <td>mixta_o_unilateral</td>
+      <td>47247</td>
+      <td>-0.41</td>
+      <td>63.75</td>
+      <td>2.66</td>
+      <td>—</td>
+      <td>—</td>
+      <td>0</td>
+      <td>2</td>
+      <td>desacelerando</td>
+      <td>0</td>
+      <td>spread_sin_cambio</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>0.19</td>
+      <td>baja</td>
+      <td>divergencia_neto_sube_precio_baja</td>
+    </tr>
+    <tr>
+      <td>Dealer / Intermediary</td>
+      <td>-34712</td>
+      <td>-73.47</td>
+      <td>-50.0</td>
+      <td>deterioro_bajista</td>
+      <td>mixta_o_unilateral</td>
+      <td>47247</td>
+      <td>-0.41</td>
+      <td>0.41</td>
+      <td>73.88</td>
+      <td>—</td>
+      <td>—</td>
+      <td>0</td>
+      <td>4</td>
+      <td>desacelerando</td>
+      <td>384</td>
+      <td>spread_disminuye</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>0.19</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>4853</td>
+      <td>10.27</td>
+      <td>1055.0</td>
+      <td>mejora_alcista</td>
+      <td>se_reducen_ambas</td>
+      <td>47247</td>
+      <td>-0.41</td>
+      <td>23.42</td>
+      <td>13.15</td>
+      <td>—</td>
+      <td>—</td>
+      <td>3</td>
+      <td>0</td>
+      <td>desacelerando</td>
+      <td>750</td>
+      <td>spread_aumenta</td>
+      <td>2.0</td>
+      <td>None</td>
+      <td>0.19</td>
+      <td>baja</td>
+      <td>divergencia_neto_sube_precio_baja</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>1582</td>
+      <td>3.35</td>
+      <td>197.0</td>
+      <td>mejora_alcista</td>
+      <td>aumentan_ambas</td>
+      <td>47247</td>
+      <td>-0.41</td>
+      <td>7.90</td>
+      <td>4.55</td>
+      <td>—</td>
+      <td>—</td>
+      <td>3</td>
+      <td>0</td>
+      <td>desacelerando</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>0.19</td>
+      <td>baja</td>
+      <td>divergencia_neto_sube_precio_baja</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>-586</td>
+      <td>-1.24</td>
+      <td>112.0</td>
+      <td>mejora_alcista</td>
+      <td>nuevos_long_y_cierre_short</td>
+      <td>47247</td>
+      <td>-0.41</td>
+      <td>2.11</td>
+      <td>3.35</td>
+      <td>—</td>
+      <td>—</td>
+      <td>2</td>
+      <td>0</td>
+      <td>desacelerando</td>
+      <td>0</td>
+      <td>spread_sin_cambio</td>
+      <td>2.0</td>
+      <td>None</td>
+      <td>0.19</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+    </tr>
+  </tbody>
+</table></div></div></section><section class="market"><h2>BRITISH POUND — indicadores</h2><p class="sub">BRITISH POUND - CHICAGO MERCANTILE EXCHANGE</p><div class="tbl-scroll-wrap"><div class="tbl-scroll-top" aria-hidden="true"><div class="tbl-scroll-top-inner"></div></div><div class="tbl-scroll-main"><table class="dataframe tbl">
+  <thead>
+    <tr style="text-align: right;">
+      <th>trader_group</th>
+      <th>net_position</th>
+      <th>normalized_net_pct</th>
+      <th>delta_net_weekly</th>
+      <th>delta_net_label</th>
+      <th>accum_liq_pattern</th>
+      <th>open_interest_total</th>
+      <th>oi_change_pct</th>
+      <th>pct_oi_long_calc</th>
+      <th>pct_oi_short_calc</th>
+      <th>net_percentile_52w</th>
+      <th>net_percentile_156w</th>
+      <th>consecutive_net_up</th>
+      <th>consecutive_net_down</th>
+      <th>net_change_accel_label</th>
+      <th>spreading_positions</th>
+      <th>spread_change_label</th>
+      <th>weeks_since_regime_cross</th>
+      <th>regime_direction</th>
+      <th>price_close</th>
+      <th>price_direction_monthly</th>
+      <th>price_position_confirm_monthly</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>-54865</td>
+      <td>-25.70</td>
+      <td>-5522.0</td>
+      <td>deterioro_bajista</td>
+      <td>menos_long_y_mas_short</td>
+      <td>213502</td>
+      <td>3.99</td>
+      <td>14.07</td>
+      <td>39.77</td>
+      <td>—</td>
+      <td>—</td>
+      <td>0</td>
+      <td>4</td>
+      <td>estable</td>
+      <td>4701</td>
+      <td>spread_disminuye</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>1.19</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+    </tr>
+    <tr>
+      <td>Dealer / Intermediary</td>
+      <td>44946</td>
+      <td>21.05</td>
+      <td>8257.0</td>
+      <td>mejora_alcista</td>
+      <td>nuevos_long_y_cierre_short</td>
+      <td>213502</td>
+      <td>3.99</td>
+      <td>34.97</td>
+      <td>13.92</td>
+      <td>—</td>
+      <td>—</td>
+      <td>4</td>
+      <td>0</td>
+      <td>acelerando</td>
+      <td>505</td>
+      <td>spread_aumenta</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>1.19</td>
+      <td>baja</td>
+      <td>divergencia_neto_sube_precio_baja</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>28225</td>
+      <td>13.22</td>
+      <td>-730.0</td>
+      <td>deterioro_bajista</td>
+      <td>aumentan_ambas</td>
+      <td>213502</td>
+      <td>3.99</td>
+      <td>34.14</td>
+      <td>20.92</td>
+      <td>—</td>
+      <td>—</td>
+      <td>0</td>
+      <td>1</td>
+      <td>desacelerando</td>
+      <td>9093</td>
+      <td>spread_aumenta</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>1.19</td>
+      <td>baja</td>
+      <td>divergencia_neto_sube_precio_baja</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>-16225</td>
+      <td>-7.60</td>
+      <td>-2005.0</td>
+      <td>deterioro_bajista</td>
+      <td>menos_long_y_mas_short</td>
+      <td>213502</td>
+      <td>3.99</td>
+      <td>9.48</td>
+      <td>17.08</td>
+      <td>—</td>
+      <td>—</td>
+      <td>0</td>
+      <td>1</td>
+      <td>desacelerando</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>1.19</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>-2081</td>
+      <td>-0.97</td>
+      <td>0.0</td>
+      <td>sin_cambio_neto</td>
+      <td>sin_cambio</td>
+      <td>213502</td>
+      <td>3.99</td>
+      <td>0.65</td>
+      <td>1.62</td>
+      <td>—</td>
+      <td>—</td>
+      <td>0</td>
+      <td>0</td>
+      <td>desacelerando</td>
+      <td>0</td>
+      <td>spread_sin_cambio</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>1.19</td>
+      <td>baja</td>
+      <td>None</td>
+    </tr>
+  </tbody>
+</table></div></div></section><section class="market"><h2>CANADIAN DOLLAR — indicadores</h2><p class="sub">CANADIAN DOLLAR - CHICAGO MERCANTILE EXCHANGE</p><div class="tbl-scroll-wrap"><div class="tbl-scroll-top" aria-hidden="true"><div class="tbl-scroll-top-inner"></div></div><div class="tbl-scroll-main"><table class="dataframe tbl">
+  <thead>
+    <tr style="text-align: right;">
+      <th>trader_group</th>
+      <th>net_position</th>
+      <th>normalized_net_pct</th>
+      <th>delta_net_weekly</th>
+      <th>delta_net_label</th>
+      <th>accum_liq_pattern</th>
+      <th>open_interest_total</th>
+      <th>oi_change_pct</th>
+      <th>pct_oi_long_calc</th>
+      <th>pct_oi_short_calc</th>
+      <th>net_percentile_52w</th>
+      <th>net_percentile_156w</th>
+      <th>consecutive_net_up</th>
+      <th>consecutive_net_down</th>
+      <th>net_change_accel_label</th>
+      <th>spreading_positions</th>
+      <th>spread_change_label</th>
+      <th>weeks_since_regime_cross</th>
+      <th>regime_direction</th>
+      <th>price_close</th>
+      <th>price_direction_monthly</th>
+      <th>price_position_confirm_monthly</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>-40129</td>
+      <td>-26.42</td>
+      <td>3535.0</td>
+      <td>mejora_alcista</td>
+      <td>se_reducen_ambas</td>
+      <td>151896</td>
+      <td>1.9</td>
+      <td>14.62</td>
+      <td>41.03</td>
+      <td>—</td>
+      <td>—</td>
+      <td>1</td>
+      <td>0</td>
+      <td>estable</td>
+      <td>5917</td>
+      <td>spread_aumenta</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>0.73</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+    </tr>
+    <tr>
+      <td>Dealer / Intermediary</td>
+      <td>50358</td>
+      <td>33.15</td>
+      <td>-488.0</td>
+      <td>deterioro_bajista</td>
+      <td>menos_long_y_mas_short</td>
+      <td>151896</td>
+      <td>1.9</td>
+      <td>35.44</td>
+      <td>2.28</td>
+      <td>—</td>
+      <td>—</td>
+      <td>0</td>
+      <td>1</td>
+      <td>desacelerando</td>
+      <td>946</td>
+      <td>spread_aumenta</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>0.73</td>
+      <td>baja</td>
+      <td>divergencia_neto_sube_precio_baja</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>-18734</td>
+      <td>-12.33</td>
+      <td>-3762.0</td>
+      <td>deterioro_bajista</td>
+      <td>menos_long_y_mas_short</td>
+      <td>151896</td>
+      <td>1.9</td>
+      <td>9.66</td>
+      <td>22.00</td>
+      <td>—</td>
+      <td>—</td>
+      <td>0</td>
+      <td>2</td>
+      <td>estable</td>
+      <td>6346</td>
+      <td>spread_aumenta</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>0.73</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>-2250</td>
+      <td>-1.48</td>
+      <td>-1386.0</td>
+      <td>deterioro_bajista</td>
+      <td>aumentan_ambas</td>
+      <td>151896</td>
+      <td>1.9</td>
+      <td>23.02</td>
+      <td>24.50</td>
+      <td>—</td>
+      <td>—</td>
+      <td>0</td>
+      <td>3</td>
+      <td>estable</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>1.0</td>
+      <td>None</td>
+      <td>0.73</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>10755</td>
+      <td>7.08</td>
+      <td>2101.0</td>
+      <td>mejora_alcista</td>
+      <td>nuevos_long_y_cierre_short</td>
+      <td>151896</td>
+      <td>1.9</td>
+      <td>8.25</td>
+      <td>1.17</td>
+      <td>—</td>
+      <td>—</td>
+      <td>1</td>
+      <td>0</td>
+      <td>acelerando</td>
+      <td>482</td>
+      <td>spread_aumenta</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>0.73</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+    </tr>
+  </tbody>
+</table></div></div></section><section class="market"><h2>EURO FX — indicadores</h2><p class="sub">EURO FX - CHICAGO MERCANTILE EXCHANGE</p><div class="tbl-scroll-wrap"><div class="tbl-scroll-top" aria-hidden="true"><div class="tbl-scroll-top-inner"></div></div><div class="tbl-scroll-main"><table class="dataframe tbl">
+  <thead>
+    <tr style="text-align: right;">
+      <th>trader_group</th>
+      <th>net_position</th>
+      <th>normalized_net_pct</th>
+      <th>delta_net_weekly</th>
+      <th>delta_net_label</th>
+      <th>accum_liq_pattern</th>
+      <th>open_interest_total</th>
+      <th>oi_change_pct</th>
+      <th>pct_oi_long_calc</th>
+      <th>pct_oi_short_calc</th>
+      <th>net_percentile_52w</th>
+      <th>net_percentile_156w</th>
+      <th>consecutive_net_up</th>
+      <th>consecutive_net_down</th>
+      <th>net_change_accel_label</th>
+      <th>spreading_positions</th>
+      <th>spread_change_label</th>
+      <th>weeks_since_regime_cross</th>
+      <th>regime_direction</th>
+      <th>price_close</th>
+      <th>price_direction_monthly</th>
+      <th>price_position_confirm_monthly</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>407928</td>
+      <td>51.64</td>
+      <td>-4909.0</td>
+      <td>deterioro_bajista</td>
+      <td>menos_long_y_mas_short</td>
+      <td>789898</td>
+      <td>0.16</td>
+      <td>61.39</td>
+      <td>9.75</td>
+      <td>—</td>
+      <td>—</td>
+      <td>0</td>
+      <td>1</td>
+      <td>desacelerando</td>
+      <td>21213</td>
+      <td>spread_aumenta</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>1.06</td>
+      <td>baja</td>
+      <td>divergencia_neto_sube_precio_baja</td>
+    </tr>
+    <tr>
+      <td>Dealer / Intermediary</td>
+      <td>-501337</td>
+      <td>-63.47</td>
+      <td>3830.0</td>
+      <td>mejora_alcista</td>
+      <td>nuevos_long_y_cierre_short</td>
+      <td>789898</td>
+      <td>0.16</td>
+      <td>5.52</td>
+      <td>68.99</td>
+      <td>—</td>
+      <td>—</td>
+      <td>1</td>
+      <td>0</td>
+      <td>desacelerando</td>
+      <td>7616</td>
+      <td>spread_disminuye</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>1.06</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>23229</td>
+      <td>2.94</td>
+      <td>1821.0</td>
+      <td>mejora_alcista</td>
+      <td>nuevos_long_y_cierre_short</td>
+      <td>789898</td>
+      <td>0.16</td>
+      <td>10.04</td>
+      <td>7.10</td>
+      <td>—</td>
+      <td>—</td>
+      <td>5</td>
+      <td>0</td>
+      <td>desacelerando</td>
+      <td>18535</td>
+      <td>spread_aumenta</td>
+      <td>3.0</td>
+      <td>None</td>
+      <td>1.06</td>
+      <td>baja</td>
+      <td>divergencia_neto_sube_precio_baja</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>48750</td>
+      <td>6.17</td>
+      <td>866.0</td>
+      <td>mejora_alcista</td>
+      <td>se_reducen_ambas</td>
+      <td>789898</td>
+      <td>0.16</td>
+      <td>11.61</td>
+      <td>5.44</td>
+      <td>—</td>
+      <td>—</td>
+      <td>2</td>
+      <td>0</td>
+      <td>desacelerando</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>1.06</td>
+      <td>baja</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>21430</td>
+      <td>2.71</td>
+      <td>-1608.0</td>
+      <td>deterioro_bajista</td>
+      <td>menos_long_y_mas_short</td>
+      <td>789898</td>
+      <td>0.16</td>
+      <td>4.80</td>
+      <td>2.09</td>
+      <td>—</td>
+      <td>—</td>
+      <td>0</td>
+      <td>4</td>
+      <td>estable</td>
+      <td>5001</td>
+      <td>spread_disminuye</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>1.06</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+    </tr>
+  </tbody>
+</table></div></div></section><section class="market"><h2>EURO FX/BRITISH POUND XRATE — indicadores</h2><p class="sub">EURO FX/BRITISH POUND XRATE - CHICAGO MERCANTILE EXCHANGE</p><div class="tbl-scroll-wrap"><div class="tbl-scroll-top" aria-hidden="true"><div class="tbl-scroll-top-inner"></div></div><div class="tbl-scroll-main"><table class="dataframe tbl">
+  <thead>
+    <tr style="text-align: right;">
+      <th>trader_group</th>
+      <th>net_position</th>
+      <th>normalized_net_pct</th>
+      <th>delta_net_weekly</th>
+      <th>delta_net_label</th>
+      <th>accum_liq_pattern</th>
+      <th>open_interest_total</th>
+      <th>oi_change_pct</th>
+      <th>pct_oi_long_calc</th>
+      <th>pct_oi_short_calc</th>
+      <th>net_percentile_52w</th>
+      <th>net_percentile_156w</th>
+      <th>consecutive_net_up</th>
+      <th>consecutive_net_down</th>
+      <th>net_change_accel_label</th>
+      <th>spreading_positions</th>
+      <th>spread_change_label</th>
+      <th>weeks_since_regime_cross</th>
+      <th>regime_direction</th>
+      <th>price_close</th>
+      <th>price_direction_monthly</th>
+      <th>price_position_confirm_monthly</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>14157</td>
+      <td>41.55</td>
+      <td>14.0</td>
+      <td>mejora_alcista</td>
+      <td>aumentan_ambas</td>
+      <td>34071</td>
+      <td>3.87</td>
+      <td>45.15</td>
+      <td>3.60</td>
+      <td>—</td>
+      <td>—</td>
+      <td>2</td>
+      <td>0</td>
+      <td>desacelerando</td>
+      <td>3525</td>
+      <td>spread_aumenta</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>0.88</td>
+      <td>sube</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <td>Dealer / Intermediary</td>
+      <td>-10710</td>
+      <td>-31.43</td>
+      <td>403.0</td>
+      <td>mejora_alcista</td>
+      <td>nuevos_long_y_cierre_short</td>
+      <td>34071</td>
+      <td>3.87</td>
+      <td>1.17</td>
+      <td>32.61</td>
+      <td>—</td>
+      <td>—</td>
+      <td>1</td>
+      <td>0</td>
+      <td>estable</td>
+      <td>58</td>
+      <td>spread_disminuye</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>0.88</td>
+      <td>sube</td>
+      <td>confirmacion_alcista_potencial</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>-14515</td>
+      <td>-42.60</td>
+      <td>-570.0</td>
+      <td>deterioro_bajista</td>
+      <td>aumentan_ambas</td>
+      <td>34071</td>
+      <td>3.87</td>
+      <td>2.55</td>
+      <td>45.16</td>
+      <td>—</td>
+      <td>—</td>
+      <td>0</td>
+      <td>3</td>
+      <td>acelerando</td>
+      <td>25</td>
+      <td>spread_aumenta</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>0.88</td>
+      <td>sube</td>
+      <td>divergencia_neto_baja_precio_sube</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>11068</td>
+      <td>32.49</td>
+      <td>-391.0</td>
+      <td>deterioro_bajista</td>
+      <td>aumentan_ambas</td>
+      <td>34071</td>
+      <td>3.87</td>
+      <td>40.53</td>
+      <td>8.05</td>
+      <td>—</td>
+      <td>—</td>
+      <td>0</td>
+      <td>1</td>
+      <td>acelerando</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>0.88</td>
+      <td>sube</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>0</td>
+      <td>0.00</td>
+      <td>544.0</td>
+      <td>mejora_alcista</td>
+      <td>mixta_o_unilateral</td>
+      <td>34071</td>
+      <td>3.87</td>
+      <td>0.00</td>
+      <td>0.00</td>
+      <td>—</td>
+      <td>—</td>
+      <td>1</td>
+      <td>0</td>
+      <td>acelerando</td>
+      <td>0</td>
+      <td>spread_sin_cambio</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>0.88</td>
+      <td>sube</td>
+      <td>confirmacion_alcista_potencial</td>
+    </tr>
+  </tbody>
+</table></div></div></section><section class="market"><h2>EURO FX/JAPANESE YEN XRATE — indicadores</h2><p class="sub">EURO FX/JAPANESE YEN XRATE - CHICAGO MERCANTILE EXCHANGE</p><div class="tbl-scroll-wrap"><div class="tbl-scroll-top" aria-hidden="true"><div class="tbl-scroll-top-inner"></div></div><div class="tbl-scroll-main"><table class="dataframe tbl">
+  <thead>
+    <tr style="text-align: right;">
+      <th>trader_group</th>
+      <th>net_position</th>
+      <th>normalized_net_pct</th>
+      <th>delta_net_weekly</th>
+      <th>delta_net_label</th>
+      <th>accum_liq_pattern</th>
+      <th>open_interest_total</th>
+      <th>oi_change_pct</th>
+      <th>pct_oi_long_calc</th>
+      <th>pct_oi_short_calc</th>
+      <th>net_percentile_52w</th>
+      <th>net_percentile_156w</th>
+      <th>consecutive_net_up</th>
+      <th>consecutive_net_down</th>
+      <th>net_change_accel_label</th>
+      <th>spreading_positions</th>
+      <th>spread_change_label</th>
+      <th>weeks_since_regime_cross</th>
+      <th>regime_direction</th>
+      <th>price_close</th>
+      <th>price_direction_monthly</th>
+      <th>price_position_confirm_monthly</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>-7801</td>
+      <td>-36.22</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>None</td>
+      <td>21537</td>
+      <td>—</td>
+      <td>16.32</td>
+      <td>52.54</td>
+      <td>—</td>
+      <td>—</td>
+      <td>0</td>
+      <td>0</td>
+      <td>None</td>
+      <td>1158</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>140.06</td>
+      <td>None</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <td>Dealer / Intermediary</td>
+      <td>1758</td>
+      <td>8.16</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>None</td>
+      <td>21537</td>
+      <td>—</td>
+      <td>24.76</td>
+      <td>16.59</td>
+      <td>—</td>
+      <td>—</td>
+      <td>0</td>
+      <td>0</td>
+      <td>None</td>
+      <td>39</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>140.06</td>
+      <td>None</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>4272</td>
+      <td>19.84</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>None</td>
+      <td>21537</td>
+      <td>—</td>
+      <td>19.84</td>
+      <td>0.00</td>
+      <td>—</td>
+      <td>—</td>
+      <td>0</td>
+      <td>0</td>
+      <td>None</td>
+      <td>0</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>140.06</td>
+      <td>None</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>2871</td>
+      <td>13.33</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>None</td>
+      <td>21537</td>
+      <td>—</td>
+      <td>33.53</td>
+      <td>20.20</td>
+      <td>—</td>
+      <td>—</td>
+      <td>0</td>
+      <td>0</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>140.06</td>
+      <td>None</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>-1100</td>
+      <td>-5.11</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>None</td>
+      <td>21537</td>
+      <td>—</td>
+      <td>0.00</td>
+      <td>5.11</td>
+      <td>—</td>
+      <td>—</td>
+      <td>0</td>
+      <td>0</td>
+      <td>None</td>
+      <td>0</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>140.06</td>
+      <td>None</td>
+      <td>None</td>
+    </tr>
+  </tbody>
+</table></div></div></section><section class="market"><h2>JAPANESE YEN — indicadores</h2><p class="sub">JAPANESE YEN - CHICAGO MERCANTILE EXCHANGE</p><div class="tbl-scroll-wrap"><div class="tbl-scroll-top" aria-hidden="true"><div class="tbl-scroll-top-inner"></div></div><div class="tbl-scroll-main"><table class="dataframe tbl">
+  <thead>
+    <tr style="text-align: right;">
+      <th>trader_group</th>
+      <th>net_position</th>
+      <th>normalized_net_pct</th>
+      <th>delta_net_weekly</th>
+      <th>delta_net_label</th>
+      <th>accum_liq_pattern</th>
+      <th>open_interest_total</th>
+      <th>oi_change_pct</th>
+      <th>pct_oi_long_calc</th>
+      <th>pct_oi_short_calc</th>
+      <th>net_percentile_52w</th>
+      <th>net_percentile_156w</th>
+      <th>consecutive_net_up</th>
+      <th>consecutive_net_down</th>
+      <th>net_change_accel_label</th>
+      <th>spreading_positions</th>
+      <th>spread_change_label</th>
+      <th>weeks_since_regime_cross</th>
+      <th>regime_direction</th>
+      <th>price_close</th>
+      <th>price_direction_monthly</th>
+      <th>price_position_confirm_monthly</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>1088</td>
+      <td>0.58</td>
+      <td>-20101.0</td>
+      <td>deterioro_bajista</td>
+      <td>menos_long_y_mas_short</td>
+      <td>186100</td>
+      <td>6.37</td>
+      <td>38.32</td>
+      <td>37.74</td>
+      <td>—</td>
+      <td>—</td>
+      <td>0</td>
+      <td>1</td>
+      <td>acelerando</td>
+      <td>3963</td>
+      <td>spread_aumenta</td>
+      <td>5.0</td>
+      <td>None</td>
+      <td>0.01</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+    </tr>
+    <tr>
+      <td>Dealer / Intermediary</td>
+      <td>19356</td>
+      <td>10.40</td>
+      <td>18886.0</td>
+      <td>mejora_alcista</td>
+      <td>nuevos_long_y_cierre_short</td>
+      <td>186100</td>
+      <td>6.37</td>
+      <td>19.75</td>
+      <td>9.35</td>
+      <td>—</td>
+      <td>—</td>
+      <td>1</td>
+      <td>0</td>
+      <td>acelerando</td>
+      <td>14670</td>
+      <td>spread_disminuye</td>
+      <td>2.0</td>
+      <td>None</td>
+      <td>0.01</td>
+      <td>baja</td>
+      <td>divergencia_neto_sube_precio_baja</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>-7088</td>
+      <td>-3.81</td>
+      <td>6573.0</td>
+      <td>mejora_alcista</td>
+      <td>aumentan_ambas</td>
+      <td>186100</td>
+      <td>6.37</td>
+      <td>16.55</td>
+      <td>20.36</td>
+      <td>—</td>
+      <td>—</td>
+      <td>2</td>
+      <td>0</td>
+      <td>acelerando</td>
+      <td>4526</td>
+      <td>spread_aumenta</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>0.01</td>
+      <td>baja</td>
+      <td>divergencia_neto_sube_precio_baja</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>-12860</td>
+      <td>-6.91</td>
+      <td>-4934.0</td>
+      <td>deterioro_bajista</td>
+      <td>menos_long_y_mas_short</td>
+      <td>186100</td>
+      <td>6.37</td>
+      <td>12.38</td>
+      <td>19.29</td>
+      <td>—</td>
+      <td>—</td>
+      <td>0</td>
+      <td>5</td>
+      <td>acelerando</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>2.0</td>
+      <td>None</td>
+      <td>0.01</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>-496</td>
+      <td>-0.27</td>
+      <td>-424.0</td>
+      <td>deterioro_bajista</td>
+      <td>menos_long_y_mas_short</td>
+      <td>186100</td>
+      <td>6.37</td>
+      <td>0.54</td>
+      <td>0.81</td>
+      <td>—</td>
+      <td>—</td>
+      <td>0</td>
+      <td>2</td>
+      <td>estable</td>
+      <td>0</td>
+      <td>spread_sin_cambio</td>
+      <td>1.0</td>
+      <td>None</td>
+      <td>0.01</td>
+      <td>baja</td>
+      <td>None</td>
+    </tr>
+  </tbody>
+</table></div></div></section><section class="market"><h2>NZ DOLLAR — indicadores</h2><p class="sub">NZ DOLLAR - CHICAGO MERCANTILE EXCHANGE</p><div class="tbl-scroll-wrap"><div class="tbl-scroll-top" aria-hidden="true"><div class="tbl-scroll-top-inner"></div></div><div class="tbl-scroll-main"><table class="dataframe tbl">
+  <thead>
+    <tr style="text-align: right;">
+      <th>trader_group</th>
+      <th>net_position</th>
+      <th>normalized_net_pct</th>
+      <th>delta_net_weekly</th>
+      <th>delta_net_label</th>
+      <th>accum_liq_pattern</th>
+      <th>open_interest_total</th>
+      <th>oi_change_pct</th>
+      <th>pct_oi_long_calc</th>
+      <th>pct_oi_short_calc</th>
+      <th>net_percentile_52w</th>
+      <th>net_percentile_156w</th>
+      <th>consecutive_net_up</th>
+      <th>consecutive_net_down</th>
+      <th>net_change_accel_label</th>
+      <th>spreading_positions</th>
+      <th>spread_change_label</th>
+      <th>weeks_since_regime_cross</th>
+      <th>regime_direction</th>
+      <th>price_close</th>
+      <th>price_direction_monthly</th>
+      <th>price_position_confirm_monthly</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>-1296</td>
+      <td>-4.34</td>
+      <td>-1411.0</td>
+      <td>deterioro_bajista</td>
+      <td>menos_long_y_mas_short</td>
+      <td>29888</td>
+      <td>-0.04</td>
+      <td>24.69</td>
+      <td>29.03</td>
+      <td>—</td>
+      <td>—</td>
+      <td>0</td>
+      <td>2</td>
+      <td>desacelerando</td>
+      <td>239</td>
+      <td>spread_disminuye</td>
+      <td>0.0</td>
+      <td>cruzo_a_neto_negativo</td>
+      <td>0.62</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+    </tr>
+    <tr>
+      <td>Dealer / Intermediary</td>
+      <td>-1289</td>
+      <td>-4.31</td>
+      <td>2090.0</td>
+      <td>mejora_alcista</td>
+      <td>nuevos_long_y_cierre_short</td>
+      <td>29888</td>
+      <td>-0.04</td>
+      <td>15.00</td>
+      <td>19.32</td>
+      <td>—</td>
+      <td>—</td>
+      <td>2</td>
+      <td>0</td>
+      <td>desacelerando</td>
+      <td>215</td>
+      <td>spread_aumenta</td>
+      <td>3.0</td>
+      <td>None</td>
+      <td>0.62</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>2075</td>
+      <td>6.94</td>
+      <td>-187.0</td>
+      <td>deterioro_bajista</td>
+      <td>aumentan_ambas</td>
+      <td>29888</td>
+      <td>-0.04</td>
+      <td>38.98</td>
+      <td>32.04</td>
+      <td>—</td>
+      <td>—</td>
+      <td>0</td>
+      <td>2</td>
+      <td>desacelerando</td>
+      <td>1160</td>
+      <td>spread_aumenta</td>
+      <td>3.0</td>
+      <td>None</td>
+      <td>0.62</td>
+      <td>baja</td>
+      <td>divergencia_neto_sube_precio_baja</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>236</td>
+      <td>0.79</td>
+      <td>-1027.0</td>
+      <td>deterioro_bajista</td>
+      <td>se_reducen_ambas</td>
+      <td>29888</td>
+      <td>-0.04</td>
+      <td>13.47</td>
+      <td>12.68</td>
+      <td>—</td>
+      <td>—</td>
+      <td>0</td>
+      <td>1</td>
+      <td>estable</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>1.0</td>
+      <td>None</td>
+      <td>0.62</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>274</td>
+      <td>0.92</td>
+      <td>535.0</td>
+      <td>mejora_alcista</td>
+      <td>aumentan_ambas</td>
+      <td>29888</td>
+      <td>-0.04</td>
+      <td>2.41</td>
+      <td>1.49</td>
+      <td>—</td>
+      <td>—</td>
+      <td>1</td>
+      <td>0</td>
+      <td>acelerando</td>
+      <td>14</td>
+      <td>spread_sin_cambio</td>
+      <td>0.0</td>
+      <td>cruzo_a_neto_positivo</td>
+      <td>0.62</td>
+      <td>baja</td>
+      <td>divergencia_neto_sube_precio_baja</td>
+    </tr>
+  </tbody>
+</table></div></div></section><section class="market"><h2>SWISS FRANC — indicadores</h2><p class="sub">SWISS FRANC - CHICAGO MERCANTILE EXCHANGE</p><div class="tbl-scroll-wrap"><div class="tbl-scroll-top" aria-hidden="true"><div class="tbl-scroll-top-inner"></div></div><div class="tbl-scroll-main"><table class="dataframe tbl">
+  <thead>
+    <tr style="text-align: right;">
+      <th>trader_group</th>
+      <th>net_position</th>
+      <th>normalized_net_pct</th>
+      <th>delta_net_weekly</th>
+      <th>delta_net_label</th>
+      <th>accum_liq_pattern</th>
+      <th>open_interest_total</th>
+      <th>oi_change_pct</th>
+      <th>pct_oi_long_calc</th>
+      <th>pct_oi_short_calc</th>
+      <th>net_percentile_52w</th>
+      <th>net_percentile_156w</th>
+      <th>consecutive_net_up</th>
+      <th>consecutive_net_down</th>
+      <th>net_change_accel_label</th>
+      <th>spreading_positions</th>
+      <th>spread_change_label</th>
+      <th>weeks_since_regime_cross</th>
+      <th>regime_direction</th>
+      <th>price_close</th>
+      <th>price_direction_monthly</th>
+      <th>price_position_confirm_monthly</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>-6391</td>
+      <td>-16.35</td>
+      <td>-1123.0</td>
+      <td>deterioro_bajista</td>
+      <td>menos_long_y_mas_short</td>
+      <td>39087</td>
+      <td>3.98</td>
+      <td>9.52</td>
+      <td>25.88</td>
+      <td>—</td>
+      <td>—</td>
+      <td>0</td>
+      <td>1</td>
+      <td>estable</td>
+      <td>475</td>
+      <td>spread_disminuye</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>1.06</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+    </tr>
+    <tr>
+      <td>Dealer / Intermediary</td>
+      <td>12887</td>
+      <td>32.97</td>
+      <td>457.0</td>
+      <td>mejora_alcista</td>
+      <td>nuevos_long_y_cierre_short</td>
+      <td>39087</td>
+      <td>3.98</td>
+      <td>36.60</td>
+      <td>3.63</td>
+      <td>—</td>
+      <td>—</td>
+      <td>3</td>
+      <td>0</td>
+      <td>desacelerando</td>
+      <td>156</td>
+      <td>spread_aumenta</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>1.06</td>
+      <td>baja</td>
+      <td>divergencia_neto_sube_precio_baja</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>-2501</td>
+      <td>-6.40</td>
+      <td>2229.0</td>
+      <td>mejora_alcista</td>
+      <td>aumentan_ambas</td>
+      <td>39087</td>
+      <td>3.98</td>
+      <td>23.80</td>
+      <td>30.19</td>
+      <td>—</td>
+      <td>—</td>
+      <td>1</td>
+      <td>0</td>
+      <td>acelerando</td>
+      <td>37</td>
+      <td>spread_disminuye</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>1.06</td>
+      <td>baja</td>
+      <td>divergencia_neto_sube_precio_baja</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>-5538</td>
+      <td>-14.17</td>
+      <td>-924.0</td>
+      <td>deterioro_bajista</td>
+      <td>menos_long_y_mas_short</td>
+      <td>39087</td>
+      <td>3.98</td>
+      <td>23.31</td>
+      <td>37.48</td>
+      <td>—</td>
+      <td>—</td>
+      <td>0</td>
+      <td>4</td>
+      <td>estable</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>1.06</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>1543</td>
+      <td>3.95</td>
+      <td>-639.0</td>
+      <td>deterioro_bajista</td>
+      <td>menos_long_y_mas_short</td>
+      <td>39087</td>
+      <td>3.98</td>
+      <td>5.07</td>
+      <td>1.12</td>
+      <td>—</td>
+      <td>—</td>
+      <td>0</td>
+      <td>1</td>
+      <td>None</td>
+      <td>0</td>
+      <td>spread_sin_cambio</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>1.06</td>
+      <td>baja</td>
+      <td>confirmacion_bajista_potencial</td>
+    </tr>
+  </tbody>
+</table></div></div></section><section class="market"><h2>USD INDEX — indicadores</h2><p class="sub">USD INDEX - ICE FUTURES U.S.</p><div class="tbl-scroll-wrap"><div class="tbl-scroll-top" aria-hidden="true"><div class="tbl-scroll-top-inner"></div></div><div class="tbl-scroll-main"><table class="dataframe tbl">
+  <thead>
+    <tr style="text-align: right;">
+      <th>trader_group</th>
+      <th>net_position</th>
+      <th>normalized_net_pct</th>
+      <th>delta_net_weekly</th>
+      <th>delta_net_label</th>
+      <th>accum_liq_pattern</th>
+      <th>open_interest_total</th>
+      <th>oi_change_pct</th>
+      <th>pct_oi_long_calc</th>
+      <th>pct_oi_short_calc</th>
+      <th>net_percentile_52w</th>
+      <th>net_percentile_156w</th>
+      <th>consecutive_net_up</th>
+      <th>consecutive_net_down</th>
+      <th>net_change_accel_label</th>
+      <th>spreading_positions</th>
+      <th>spread_change_label</th>
+      <th>weeks_since_regime_cross</th>
+      <th>regime_direction</th>
+      <th>price_close</th>
+      <th>price_direction_monthly</th>
+      <th>price_position_confirm_monthly</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Asset Manager / Institutional</td>
+      <td>11933</td>
+      <td>33.13</td>
+      <td>2065.0</td>
+      <td>mejora_alcista</td>
+      <td>nuevos_long_y_cierre_short</td>
+      <td>36022</td>
+      <td>9.27</td>
+      <td>39.44</td>
+      <td>6.31</td>
+      <td>—</td>
+      <td>—</td>
+      <td>1</td>
+      <td>0</td>
+      <td>acelerando</td>
+      <td>1008</td>
+      <td>spread_aumenta</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>105.21</td>
+      <td>sube</td>
+      <td>divergencia_neto_baja_precio_sube</td>
+    </tr>
+    <tr>
+      <td>Dealer / Intermediary</td>
+      <td>-12681</td>
+      <td>-35.20</td>
+      <td>-230.0</td>
+      <td>deterioro_bajista</td>
+      <td>mixta_o_unilateral</td>
+      <td>36022</td>
+      <td>9.27</td>
+      <td>0.21</td>
+      <td>35.42</td>
+      <td>—</td>
+      <td>—</td>
+      <td>0</td>
+      <td>1</td>
+      <td>acelerando</td>
+      <td>0</td>
+      <td>spread_sin_cambio</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>105.21</td>
+      <td>sube</td>
+      <td>None</td>
+    </tr>
+    <tr>
+      <td>Leveraged Funds</td>
+      <td>-7248</td>
+      <td>-20.12</td>
+      <td>-2861.0</td>
+      <td>deterioro_bajista</td>
+      <td>aumentan_ambas</td>
+      <td>36022</td>
+      <td>9.27</td>
+      <td>22.87</td>
+      <td>42.99</td>
+      <td>—</td>
+      <td>—</td>
+      <td>0</td>
+      <td>2</td>
+      <td>acelerando</td>
+      <td>860</td>
+      <td>spread_aumenta</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>105.21</td>
+      <td>sube</td>
+      <td>divergencia_neto_baja_precio_sube</td>
+    </tr>
+    <tr>
+      <td>Nonreportable</td>
+      <td>4442</td>
+      <td>12.33</td>
+      <td>275.0</td>
+      <td>mejora_alcista</td>
+      <td>nuevos_long_y_cierre_short</td>
+      <td>36022</td>
+      <td>9.27</td>
+      <td>18.97</td>
+      <td>6.63</td>
+      <td>—</td>
+      <td>—</td>
+      <td>2</td>
+      <td>0</td>
+      <td>desacelerando</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>105.21</td>
+      <td>sube</td>
+      <td>confirmacion_alcista_potencial</td>
+    </tr>
+    <tr>
+      <td>Other Reportables</td>
+      <td>3554</td>
+      <td>9.87</td>
+      <td>751.0</td>
+      <td>mejora_alcista</td>
+      <td>aumentan_ambas</td>
+      <td>36022</td>
+      <td>9.27</td>
+      <td>13.05</td>
+      <td>3.19</td>
+      <td>—</td>
+      <td>—</td>
+      <td>1</td>
+      <td>0</td>
+      <td>estable</td>
+      <td>100</td>
+      <td>spread_aumenta</td>
+      <td>&lt;NA&gt;</td>
+      <td>None</td>
+      <td>105.21</td>
+      <td>sube</td>
+      <td>divergencia_neto_baja_precio_sube</td>
+    </tr>
+  </tbody>
+</table></div></div></section>
+</main>
+<footer>
+  Fuente: CFTC <code>fut_fin_txt_YYYY.zip</code> (Traders in Financial Futures, Futures Only).
+  Universo: F10 + F15 (NZD/BRL) + <strong>USD INDEX</strong> (ICE, F90 / 098662);
+  excluidos MXN / ZAR / CNH vía <code>exclude_markets</code>.
+  Generado por <code>cot_system/main.py</code>.
+  Validación: OI duplicados=0;
+  mismatches de cambio=0.
+  Umbrales: <code>config/scoring_rules.json</code> (provisional=True).
+</footer>
+
+<script>
+(function () {
+  function wire(wrap) {
+    var top = wrap.querySelector(".tbl-scroll-top");
+    var main = wrap.querySelector(".tbl-scroll-main");
+    var inner = wrap.querySelector(".tbl-scroll-top-inner");
+    var table = main && main.querySelector("table");
+    if (!top || !main || !inner || !table) return;
+    var syncing = false;
+    function sizeTop() {
+      inner.style.width = table.scrollWidth + "px";
+      var need = table.scrollWidth > main.clientWidth + 1;
+      wrap.classList.toggle("needs-hscroll", need);
+      if (!need) {
+        top.scrollLeft = 0;
+        main.scrollLeft = 0;
+      }
+    }
+    top.addEventListener("scroll", function () {
+      if (syncing) return;
+      syncing = true;
+      main.scrollLeft = top.scrollLeft;
+      syncing = false;
+    });
+    main.addEventListener("scroll", function () {
+      if (syncing) return;
+      syncing = true;
+      top.scrollLeft = main.scrollLeft;
+      syncing = false;
+    });
+    sizeTop();
+    if (typeof ResizeObserver !== "undefined") {
+      var ro = new ResizeObserver(sizeTop);
+      ro.observe(main);
+      ro.observe(table);
+    }
+    window.addEventListener("resize", sizeTop);
+  }
+  function init() {
+    document.querySelectorAll(".tbl-scroll-wrap").forEach(wire);
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+})();
+</script>
+
+</body>
+</html>
